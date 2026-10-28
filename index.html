@@ -4,162 +4,194 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Building a proof of concept on Azure</title>
-<meta name="description" content="A guide for turning an idea into a working, secure proof of concept on Microsoft Azure: ideation, choosing and costing the approach, and the build, in plain language with an optional technical layer.">
+<meta name="description" content="A short, step-by-step guide to turning an idea into a working, secure proof of concept on Microsoft Azure. Plain language, with an optional technical layer.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b4f8a'/%3E%3Cpath d='M16 6l8 5v10l-8 5-8-5V11z' fill='none' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E">
 <style>
 :root{
   --bg:#f7f6f2; --surface:#ffffff; --ink:#1c2430; --muted:#5b6574; --line:#dfdcd3;
   --accent:#0b4f8a; --accent-ink:#ffffff; --accent-soft:#e6eef7; --good:#1f7a4d; --warn:#9a5b00; --warn-soft:#fbf1dc;
-  --tech-soft:#eef2f6; --code-bg:#14202e; --code-ink:#e6edf5; --radius:10px;
+  --tech-soft:#eef2f6; --code-bg:#14202e; --code-ink:#e6edf5; --radius:12px;
 }
 @media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
+  :root{
     --bg:#10161d; --surface:#18212b; --ink:#e7ecf2; --muted:#9aa7b6; --line:#2a3644;
     --accent:#6fb1ee; --accent-ink:#0c1620; --accent-soft:#1a2b3d; --good:#59c58d; --warn:#f0b560; --warn-soft:#2d2415;
     --tech-soft:#1b2632; --code-bg:#0b1118; --code-ink:#dbe6f1;
   }
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:84px}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-h1,h2,h3,h4{font-family:Georgia,"Times New Roman",serif;line-height:1.25;color:var(--ink)}
-h1{font-size:2.1rem;margin:0 0 .4rem}
-h2{font-size:1.7rem;margin:0 0 .6rem}
-h3{font-size:1.2rem;margin:1.8rem 0 .5rem}
-h4{font-size:1rem;margin:1.2rem 0 .3rem;font-family:inherit}
-p{margin:.6rem 0}
+html{scroll-padding-top:90px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+h1,h2,h3,h4{font-family:Georgia,"Times New Roman",serif;line-height:1.25;color:var(--ink);margin:0}
+h1{font-size:2.3rem}
+h2{font-size:1.65rem;margin-bottom:.3rem}
+h3{font-size:1.2rem;margin:1.5rem 0 .5rem}
+h4{font-size:1rem;margin:1.1rem 0 .3rem;font-family:inherit}
+p{margin:.5rem 0}
 a{color:var(--accent)}
-code{font-family:Consolas,"SFMono-Regular",Menlo,monospace;font-size:.88em;background:var(--tech-soft);padding:.1em .35em;border-radius:4px}
-ul,ol{padding-left:1.3rem}
-li{margin:.25rem 0}
+code{font-family:Consolas,Menlo,monospace;font-size:.88em;background:var(--tech-soft);padding:.1em .35em;border-radius:4px}
+ul,ol{padding-left:1.25rem;margin:.4rem 0}
+li{margin:.2rem 0}
 .skip{position:absolute;left:-999px}
 .skip:focus{left:8px;top:8px;background:var(--surface);padding:8px 12px;z-index:100}
 
 /* header */
 .top{position:sticky;top:0;z-index:50;background:var(--surface);border-bottom:1px solid var(--line)}
 .top-in{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.brand{font-family:Georgia,serif;font-weight:700;font-size:1.05rem;margin-right:auto;display:flex;align-items:center;gap:8px}
-.brand svg{flex:none}
+.brand{font-family:Georgia,serif;font-weight:700;font-size:1.05rem;margin-right:auto;display:flex;align-items:center;gap:8px;color:var(--ink);text-decoration:none}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
 .seg button{border:0;background:transparent;color:var(--ink);padding:7px 14px;font:inherit;font-size:.9rem;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
-.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 12px;border-radius:8px;font:inherit;font-size:.9rem;cursor:pointer}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:9px;font:inherit;font-size:.92rem;cursor:pointer;text-decoration:none;display:inline-block}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 
 /* layout */
-.wrap{max-width:1180px;margin:0 auto;padding:0 16px;display:grid;grid-template-columns:240px minmax(0,1fr);gap:36px}
-nav.toc{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 90px);overflow:auto;padding:22px 0}
-nav.toc ol{list-style:none;padding:0;margin:0;counter-reset:n}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px;display:grid;grid-template-columns:210px minmax(0,1fr);gap:32px}
+nav.toc{position:sticky;top:70px;align-self:start;padding:22px 0;max-height:calc(100vh - 80px);overflow:auto}
+nav.toc ol{list-style:none;padding:0;margin:0}
 nav.toc li{margin:0}
-nav.toc a{display:block;padding:6px 10px;border-left:3px solid transparent;color:var(--muted);text-decoration:none;font-size:.92rem}
+nav.toc a{display:block;padding:6px 10px;border-left:3px solid transparent;color:var(--muted);text-decoration:none;font-size:.9rem}
 nav.toc a:hover{color:var(--ink)}
 nav.toc a.on{border-left-color:var(--accent);color:var(--ink);font-weight:600;background:var(--accent-soft)}
-.mini-toc{display:none;margin:12px 0}
-.mini-toc select{width:100%;padding:9px;font:inherit;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
-main{padding:28px 0 80px;min-width:0}
-section.part{padding:26px 0 18px;border-top:1px solid var(--line)}
-section.part:first-of-type{border-top:0;padding-top:0}
-.eyebrow{font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:4px}
-.lede{font-size:1.1rem;color:var(--muted)}
+.mini-toc{display:none;margin:12px 0 0}
+.mini-toc select{width:100%;padding:9px;font:inherit;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+main{padding:24px 0 40px;min-width:0}
+.part,.sub{display:none}
+.part.active,.sub.active{display:block}
+.eyebrow{font-size:.76rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:4px}
+.take{font-size:1.08rem;color:var(--muted);margin:.2rem 0 0;max-width:62ch}
+.take b{color:var(--ink)}
+
+/* sub-section tabs */
+.subtabs{display:flex;gap:6px;overflow-x:auto;padding:14px 0 10px;margin:0 0 6px;border-bottom:1px solid var(--line);scrollbar-width:thin}
+.subtabs[hidden]{display:none}
+.subtabs a{flex:none;padding:7px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);text-decoration:none;font-size:.9rem}
+.subtabs a.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.sub-title{display:none}
+.sub{padding-top:6px;max-width:860px}
+
+/* pager */
+.pager{display:flex;gap:12px;justify-content:space-between;align-items:stretch;margin-top:30px;padding-top:18px;border-top:1px solid var(--line)}
+.pager a{flex:1;max-width:48%;border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:12px 16px;text-decoration:none;color:var(--ink)}
+.pager a:hover{border-color:var(--accent)}
+.pager a small{display:block;color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.06em}
+.pager a b{font-family:Georgia,serif}
+.pager a.next{text-align:right;margin-left:auto;background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.pager a.next small{color:inherit;opacity:.8}
+.progress-top{height:4px;background:var(--line)}
+.progress-top i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s}
 
 /* mode layers */
-.t{display:none}
+.t,.ti{display:none}
 [data-mode="builder"] .t{display:block}
-[data-mode="builder"] span.t,[data-mode="builder"] li.t{display:revert}
+[data-mode="builder"] .ti{display:inline}
 [data-mode="builder"] .pl{display:none}
+[data-mode="plain"] .sub[data-tech]{display:none!important}
 .layer{border-left:4px solid var(--accent);background:var(--tech-soft);border-radius:0 var(--radius) var(--radius) 0;padding:6px 18px 12px;margin:16px 0}
+.layer.always{display:block}
 .layer>.tag{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-top:8px}
-.layer h4:first-of-type{margin-top:.2rem}
 
 /* components */
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
-.grid{display:grid;gap:14px}
-.g2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
-.g3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
-.steps{counter-reset:s;display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));padding:0;list-style:none}
-.steps li{counter-increment:s;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px 14px 52px;position:relative;margin:0}
-.steps li::before{content:counter(s);position:absolute;left:14px;top:14px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;font-size:.9rem}
-.steps b{display:block}
-.callout{border-radius:var(--radius);padding:12px 16px;margin:16px 0;border:1px solid var(--line);background:var(--surface)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.card h4:first-child,.card b:first-child{margin-top:0}
+.grid{display:grid;gap:12px;margin:12px 0}
+.g2{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.card p{margin:.3rem 0 0;color:var(--muted);font-size:.94rem}
+.card ul{font-size:.94rem}
+.num{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:.85rem;margin-right:8px}
+.callout{border-radius:var(--radius);padding:11px 15px;margin:14px 0;border:1px solid var(--line);background:var(--surface);font-size:.96rem}
 .callout.warn{background:var(--warn-soft);border-color:var(--warn)}
 .callout.eg{background:var(--accent-soft);border-color:transparent}
-.callout b.l{display:block;font-size:.76rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:2px}
+.callout b.l{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:2px}
 .callout.warn b.l{color:var(--warn)}
-.table-wrap{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+.table-wrap{overflow-x:auto;margin:10px 0;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
 table{border-collapse:collapse;width:100%;font-size:.92rem}
-th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
-th{background:var(--accent-soft);font-weight:700;white-space:nowrap}
+th,td{padding:8px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{background:var(--accent-soft);font-weight:700}
 tr:last-child td{border-bottom:0}
-pre{position:relative;background:var(--code-bg);color:var(--code-ink);padding:14px 16px;border-radius:var(--radius);overflow-x:auto;margin:12px 0;font-size:.84rem;line-height:1.55}
+pre{position:relative;background:var(--code-bg);color:var(--code-ink);padding:14px 16px;border-radius:var(--radius);overflow-x:auto;margin:10px 0;font-size:.83rem;line-height:1.55}
 pre code{background:none;padding:0;color:inherit;font-size:inherit}
 pre .copy{position:absolute;top:8px;right:8px;background:#ffffff1f;color:#fff;border:1px solid #ffffff40;border-radius:6px;padding:3px 9px;font-size:.75rem;cursor:pointer}
-pre .copy:hover{background:#ffffff38}
 .chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
 .chip{padding:5px 13px;border-radius:999px;background:var(--accent-soft);border:1px solid var(--line);font-size:.9rem;font-weight:600}
 .arrow{color:var(--muted)}
-.flow{display:grid;gap:8px;margin:14px 0}
-.flow .node{background:var(--surface);border:2px solid var(--accent);border-radius:var(--radius);padding:10px 14px}
+.flow{display:grid;gap:6px;margin:12px 0}
+.flow .node{background:var(--surface);border:2px solid var(--accent);border-radius:var(--radius);padding:9px 14px}
 .flow .node small{display:block;color:var(--muted)}
 .flow .down{text-align:center;color:var(--muted);line-height:1}
 .flow .row{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 .flow .node.side{border-style:dashed}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
-.tabs button{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 13px;border-radius:8px;font:inherit;font-size:.9rem;cursor:pointer}
+.tabs button{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 12px;border-radius:8px;font:inherit;font-size:.88rem;cursor:pointer}
 .tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .panel[hidden]{display:none}
-.tool{background:var(--surface);border:2px solid var(--accent-soft);border-radius:var(--radius);padding:16px 18px;margin:16px 0}
+.tool{background:var(--surface);border:2px solid var(--accent-soft);border-radius:var(--radius);padding:14px 18px;margin:14px 0}
 .tool>h4{margin-top:0;font-size:1.05rem}
-.tool label{font-size:.88rem;color:var(--muted);display:block}
+.tool label{font-size:.86rem;color:var(--muted);display:block}
 .tool select,.tool input[type=number],.tool input[type=text]{padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);font:inherit;font-size:.92rem;max-width:100%}
 .tool input[type=number]{width:96px}
-.fields{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
-.out{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px}
-.out .k{background:var(--accent-soft);border-radius:var(--radius);padding:10px 16px;min-width:150px}
-.out .k b{display:block;font-size:1.4rem;font-family:Georgia,serif}
-.out .k span{font-size:.82rem;color:var(--muted)}
-.matrix th,.matrix td{white-space:nowrap}
+.fields{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.fields select{width:100%}
+.out{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}
+.out .k{background:var(--accent-soft);border-radius:var(--radius);padding:9px 14px;min-width:140px}
+.out .k b{display:block;font-size:1.35rem;font-family:Georgia,serif}
+.out .k span{font-size:.8rem;color:var(--muted)}
 .matrix input[type=text]{width:100%;min-width:118px}
 .matrix td:first-child input[type=text]{min-width:200px}
 .matrix input[type=number]{width:62px}
-.matrix td.tot{font-weight:700}
-.matrix tr.win td.tot{color:var(--good)}
+.matrix th,.matrix td{white-space:nowrap}
 .hint{font-size:.85rem;color:var(--muted)}
 .check{list-style:none;padding:0}
-.check li{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed var(--line);margin:0}
+.check li{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-bottom:1px dashed var(--line);margin:0}
 .check input{margin-top:.35rem;width:18px;height:18px;flex:none}
 .progress{height:10px;background:var(--line);border-radius:99px;overflow:hidden;margin:6px 0 2px}
 .progress i{display:block;height:100%;background:var(--good);width:0;transition:width .25s}
-dl.gloss{display:grid;grid-template-columns:minmax(120px,200px) 1fr;gap:6px 18px}
+.pill{display:inline-block;font-size:.75rem;padding:1px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted);margin-left:6px;vertical-align:middle}
+dl.gloss{display:grid;grid-template-columns:minmax(110px,180px) 1fr;gap:6px 18px}
 dl.gloss dt{font-weight:700}
 dl.gloss dd{margin:0}
-.foot{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);font-size:.88rem}
-.pill{display:inline-block;font-size:.75rem;padding:1px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted);margin-left:6px;vertical-align:middle}
+
+/* home */
+.hero{padding:18px 0 8px;max-width:760px}
+.hero p{font-size:1.12rem;color:var(--muted);margin:.7rem 0 1.1rem}
+.tiles{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));margin:18px 0}
+.tile{display:block;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;text-decoration:none;color:var(--ink)}
+.tile:hover{border-color:var(--accent)}
+.tile .n{font-size:.75rem;font-weight:700;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;display:block}
+.tile b{display:block;font-family:Georgia,serif;font-size:1.05rem;margin:2px 0}
+.tile span.d{color:var(--muted);font-size:.9rem}
+.foot{color:var(--muted);font-size:.84rem;margin-top:26px}
 
 @media (max-width:900px){
   .wrap{grid-template-columns:minmax(0,1fr)}
   nav.toc{display:none}
   .mini-toc{display:block}
-  h1{font-size:1.7rem}
+  h1{font-size:1.8rem}
   dl.gloss{grid-template-columns:1fr}
-  dl.gloss dt{margin-top:8px}
+  .pager a{max-width:none}
 }
 @media print{
   :root{--bg:#fff;--surface:#fff}
-  .top,nav.toc,.mini-toc,.copy,.tabs,.noprint,.skip{display:none!important}
+  .top,nav.toc,.mini-toc,.copy,.tabs,.noprint,.skip,.subtabs,.pager,.progress-top{display:none!important}
   .wrap{display:block;max-width:none;padding:0}
+  .part,.sub{display:block!important;max-width:none}
+  [data-mode="plain"] .sub[data-tech]{display:none!important}
+  .sub-title{display:block;font-family:Georgia,serif;font-size:1.15rem;margin:1.3rem 0 .4rem}
   .panel[hidden]{display:block!important}
   body{font-size:10.5pt;background:#fff;color:#000}
   pre{background:#f1f1f1!important;color:#000!important;white-space:pre-wrap;word-break:break-word}
-  .card,.callout,.layer,.tool,.table-wrap,.steps li,.flow .node{break-inside:avoid}
-  h2,h3,h4{break-after:avoid}
-  section.part{border:0}
-  section.part:first-of-type{break-before:auto}
-  .tool input[type=number],.tool select{border:0}
+  .card,.callout,.layer,.tool,.table-wrap,.flow .node,tr{break-inside:avoid}
+  h2,h3,h4,.sub-title{break-after:avoid}
+  .part{break-before:page}
+  .part#home{break-before:auto}
   .table-wrap{overflow:visible}
   .matrix input[type=text]{min-width:0}
   .matrix th,.matrix td{white-space:normal}
+  .tool input[type=number],.tool select{border:0}
 }
 </style>
 </head>
@@ -168,367 +200,333 @@ dl.gloss dd{margin:0}
 
 <header class="top">
   <div class="top-in">
-    <div class="brand">
+    <a class="brand" href="#home">
       <svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0b4f8a"/><path d="M16 6l8 5v10l-8 5-8-5V11z" fill="none" stroke="#fff" stroke-width="2"/></svg>
-      Building a proof of concept on Azure
-    </div>
+      Azure POC guide
+    </a>
     <div class="seg" role="group" aria-label="Reading mode">
       <button type="button" data-set-mode="plain" aria-pressed="true">Plain language</button>
-      <button type="button" data-set-mode="builder" aria-pressed="false">With technical detail</button>
+      <button type="button" data-set-mode="builder" aria-pressed="false">+ Technical detail</button>
     </div>
-    <button type="button" class="btn noprint" id="printBtn">Print / save as PDF</button>
+    <button type="button" class="btn noprint" id="printBtn">Print / PDF</button>
   </div>
+  <div class="progress-top" aria-hidden="true"><i id="topBar"></i></div>
 </header>
 
 <div class="wrap">
-<nav class="toc" aria-label="Contents">
-  <ol id="tocList"></ol>
-</nav>
+<nav class="toc" aria-label="Parts"><ol id="tocList"></ol></nav>
 
 <main id="content">
-<div class="mini-toc"><label class="hint" for="miniToc">Jump to section</label><select id="miniToc"></select></div>
+<div class="mini-toc"><label class="hint" for="miniToc">Go to</label><select id="miniToc"></select></div>
+<div id="subtabs" class="subtabs" aria-label="Topics in this part" hidden></div>
 
-<!-- ============================================================ START -->
-<section class="part" id="start" data-title="Start here">
-  <div class="eyebrow">Start here</div>
-  <h1>From idea to a working proof of concept on Azure</h1>
-  <p class="lede">A guide for people who know their subject well and want to test an idea with a real, working system, without committing to a full project first.</p>
-
-  <div class="card">
-    <h4 style="margin-top:0">How to read this guide</h4>
-    <p>Everything is explained twice. The <b>plain-language</b> layer needs no technical background. Switch to <b>With technical detail</b> (top of the page) and extra blue panels appear with settings, commands and checks for the person who will actually build it. Your choice is remembered, and the print button saves whichever view you have open.</p>
+<!-- ============================================================ HOME -->
+<section class="part" id="home" data-title="Start here">
+ <div class="sub" data-id="intro" data-title="Start here">
+  <div class="hero">
+    <div class="eyebrow">A step-by-step guide</div>
+    <h1>From idea to a working proof of concept on Azure</h1>
+    <p>For people who know their subject well and want to test an idea with a real system before committing to a full project.</p>
+    <a class="btn primary" href="#poc">Start with Part 1</a>
   </div>
 
-  <div class="callout eg"><b class="l">Running example</b>
-    Throughout, we follow a made-up company building <b>LeaveLoop</b>, a simple tool for requesting and approving time off. Employees submit requests, managers approve or decline, and HR sees a summary. It is fictional, so nothing real or confidential appears anywhere in this guide.
+  <div class="tiles" id="homeTiles"></div>
+
+  <div class="grid g2">
+    <div class="card"><b>Two ways to read</b><p>Use <b>Plain language</b> for the ideas. Switch on <b>+ Technical detail</b> (top right) to add commands and settings for whoever builds it.</p></div>
+    <div class="card"><b>One running example</b><p><b>LeaveLoop</b>: a made-up tool for requesting and approving time off. Nothing real or confidential appears here.</p></div>
   </div>
-
-  <h3>The journey in seven steps</h3>
-  <ol class="steps">
-    <li><b>Frame the question</b>What must this proof of concept (POC) show? (Part 1)</li>
-    <li><b>Listen and design</b>Talk to the people involved, find the real problem, break it into parts. (Part 2)</li>
-    <li><b>Choose and cost</b>Compare the options honestly and price the one you pick. (Part 3)</li>
-    <li><b>Get access</b>Ask for the permissions early, because waiting is the usual delay. (Parts 4 and 5)</li>
-    <li><b>Build a thin slice</b>One complete path from start to finish, before anything else. (Part 6)</li>
-    <li><b>Put it on Azure</b>First a quick demo, then the properly secured version. (Parts 7 and 8)</li>
-    <li><b>Show it and decide</b>Measure against the question you started with. (Part 9)</li>
-  </ol>
-
-  <h3>Who does what</h3>
-  <div class="table-wrap"><table>
-    <tr><th>Person</th><th>Role in the POC</th><th>In LeaveLoop</th></tr>
-    <tr><td>Sponsor</td><td>Owns the decision at the end; removes blockers</td><td>Head of HR</td></tr>
-    <tr><td>Subject lead (you)</td><td>Knows the process; shapes the idea; gathers insight; judges the result</td><td>HR operations lead</td></tr>
-    <tr><td>Builder</td><td>Creates and deploys the system</td><td>One developer, part time</td></tr>
-    <tr><td>Cloud / IT team</td><td>Grants access, sets rules, reviews security</td><td>Central IT</td></tr>
-    <tr><td>Real users</td><td>Try it and tell you the truth</td><td>5 employees, 3 managers</td></tr>
-  </table></div>
-
-  <div class="layer t"><span class="tag">Technical detail</span>
-    <h4>One-page cheat sheet</h4>
-    <p>Reference architecture: <b>Static Web App</b> (front end) → <b>App Service</b> (API, Python/Node/.NET) → <b>Azure SQL</b> (data), with <b>Key Vault</b> (secrets), <b>Blob Storage</b> (files), a <b>managed identity</b> (the API's password-less login) and <b>Application Insights</b> (monitoring).</p>
-    <pre><code>az login ; az account set --subscription "&lt;id&gt;"
-az group create -n $RG -l $LOC --tags CostCenter=&lt;code&gt;
-az appservice plan create -g $RG -n $PLAN --is-linux --sku B1
-az staticwebapp create -g $RG -n $SWA -l &lt;region&gt; --sku Free
-az webapp create -g $RG -p $PLAN -n $APP --runtime "PYTHON:3.12"
-az webapp config appsettings set -g $RG -n $APP --settings ENABLE_ORYX_BUILD=true SCM_DO_BUILD_DURING_DEPLOYMENT=true
-az webapp deploy -g $RG -n $APP --src-path deploy.zip --type zip --async true
-# front end: build with the API address, then upload ./dist with the Static Web Apps CLI</code></pre>
-    <p>Five traps: missing <code>ENABLE_ORYX_BUILD</code> (503), zip with Windows paths/line endings, CORS origin mismatch, a front-end API address baked in at build time, and role assignments you are not permitted to create.</p>
-  </div>
+  <p class="foot">Figures are rounded planning estimates, not quotes. Check services, limits and prices in Microsoft's documentation and the Azure pricing calculator before committing.</p>
+ </div>
 </section>
 
 <!-- ============================================================ 1 -->
-<section class="part" id="poc" data-title="1 · What a POC is">
+<section class="part" id="poc" data-title="1 · What a POC is" data-blurb="The question, the scope, the people.">
   <div class="eyebrow">Part 1</div>
-  <h2>What a proof of concept is, and is not</h2>
-  <p class="lede">A POC answers one question: <b>is this idea worth investing in?</b> It is not a small version of the finished product.</p>
+  <h2>What a proof of concept is</h2>
+  <p class="take">A POC answers one question: <b>is this idea worth investing in?</b> It is not a small version of the finished product.</p>
 
+ <div class="sub" data-id="what" data-title="POC, pilot, production">
+  <h3 class="sub-title">POC, pilot, production</h3>
   <div class="grid g3">
-    <div class="card"><h4 style="margin-top:0">POC</h4><p>Short, focused, fake or non-sensitive data. Built to be judged, then kept, changed or thrown away.</p></div>
-    <div class="card"><h4 style="margin-top:0">Pilot</h4><p>Real users, real data, limited scope, support in place. Only after a POC says yes.</p></div>
-    <div class="card"><h4 style="margin-top:0">Production</h4><p>Everyone, full security, backups, monitoring, an owner on call. A project, not an experiment.</p></div>
+    <div class="card"><b>POC</b><p>Weeks, fake data. Built to be judged, then kept or dropped.</p></div>
+    <div class="card"><b>Pilot</b><p>Real users and data, limited scope, with support. Only after a POC says yes.</p></div>
+    <div class="card"><b>Production</b><p>Everyone, full security, an owner on call. A project, not an experiment.</p></div>
   </div>
+  <div class="callout"><b class="l">The rule that keeps it small</b>If a feature doesn't help answer the question, it goes on the "not now" list.</div>
+ </div>
 
-  <h3>Six things to write down before any work starts</h3>
+ <div class="sub" data-id="decide" data-title="Six decisions">
+  <h3 class="sub-title">Six decisions</h3>
+  <p>Write these down before any work starts.</p>
   <div class="table-wrap"><table>
-    <tr><th>Decide</th><th>What good looks like</th><th>LeaveLoop</th></tr>
-    <tr><td>The question</td><td>One sentence a sponsor can say yes or no to</td><td>"Can employees and managers handle leave online faster, with a clear history of who approved what?"</td></tr>
-    <tr><td>Users and roles</td><td>Three to five roles, a handful of real people</td><td>Employee, manager, HR viewer</td></tr>
-    <tr><td>In and out of scope</td><td>A written "not now" list</td><td>In: request, approve, summary. Out: payroll link, mobile app, public holidays by country</td></tr>
-    <tr><td>Success measures</td><td>Numbers or observations you can check</td><td>Request-to-decision time; 4 of 5 testers say they would switch</td></tr>
-    <tr><td>Time box</td><td>2 to 4 weeks of building, then a decision</td><td>3 weeks + 1 week to test</td></tr>
-    <tr><td>Data</td><td>Fake or non-sensitive only, unless approved otherwise</td><td>Invented employees and requests</td></tr>
+    <tr><th>Decide</th><th>Example (LeaveLoop)</th></tr>
+    <tr><td><b>The question</b></td><td>"Can leave be handled online faster, with a clear record of who approved what?"</td></tr>
+    <tr><td><b>Users and roles</b></td><td>Employee, manager, HR viewer</td></tr>
+    <tr><td><b>In / out of scope</b></td><td>In: request, approve, summary. Out: payroll link, mobile app</td></tr>
+    <tr><td><b>Success measures</b></td><td>Time from request to decision; 4 of 5 testers would switch</td></tr>
+    <tr><td><b>Time box</b></td><td>3 weeks to build, 1 to test</td></tr>
+    <tr><td><b>Data</b></td><td>Invented employees and requests only</td></tr>
   </table></div>
+ </div>
 
-  <div class="callout"><b class="l">The rule that keeps a POC small</b>
-    If a feature does not help answer the question, it is out of scope. Write it on the "not now" list so nobody feels ignored.
-  </div>
+ <div class="sub" data-id="who" data-title="Who's involved">
+  <h3 class="sub-title">Who's involved</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Person</th><th>Role</th><th>LeaveLoop</th></tr>
+    <tr><td><b>Sponsor</b></td><td>Owns the final decision; clears blockers</td><td>Head of HR</td></tr>
+    <tr><td><b>Subject lead (you)</b></td><td>Knows the process; gathers insight; judges the result</td><td>HR operations lead</td></tr>
+    <tr><td><b>Builder</b></td><td>Creates and deploys it</td><td>One developer, part time</td></tr>
+    <tr><td><b>Cloud / IT team</b></td><td>Grants access; reviews security</td><td>Central IT</td></tr>
+    <tr><td><b>Real users</b></td><td>Try it and tell you the truth</td><td>5 employees, 3 managers</td></tr>
+  </table></div>
+ </div>
 </section>
 
 <!-- ============================================================ 2 -->
-<section class="part" id="ideation" data-title="2 · Ideation">
+<section class="part" id="ideation" data-title="2 · Ideation" data-blurb="Find the real problem with the people who live with it.">
   <div class="eyebrow">Part 2</div>
-  <h2>Ideation: from a vague problem to a clear plan</h2>
-  <p class="lede">Most failed POCs solve the wrong problem. This part is about finding the right one, together with the people who live with it, and then cutting it into pieces small enough to build.</p>
+  <h2>Ideation: find the right problem</h2>
+  <p class="take">Most failed POCs solve the wrong problem. <b>Listen first, define second, build third.</b></p>
 
-  <h3>2.1 Who to talk to</h3>
-  <p>Before the first conversation, list everyone who touches the process. Four groups matter most:</p>
-  <div class="table-wrap"><table>
-    <tr><th>Group</th><th>Why they matter</th><th>LeaveLoop</th><th>Time</th></tr>
-    <tr><td>The people who do the work</td><td>They know the real steps, not the official ones</td><td>HR administrators who process requests</td><td>30 min each</td></tr>
-    <tr><td>The people who use the output</td><td>They show what is actually needed</td><td>Managers planning team cover</td><td>30 min each</td></tr>
-    <tr><td>The owner or sponsor</td><td>Defines success and constraints</td><td>Head of HR</td><td>45 min</td></tr>
-    <tr><td>Risk, security and IT</td><td>They can stop you late if you skip them early</td><td>Data protection officer, cloud team</td><td>30 min</td></tr>
-  </table></div>
-  <p class="hint">Aim for 6 to 10 conversations. After about five on the same theme, you mostly hear repeats.</p>
+ <div class="sub" data-id="who" data-title="Who to talk to">
+  <h3 class="sub-title">Who to talk to</h3>
+  <div class="grid g4">
+    <div class="card"><b>The doers</b><p>Know the real steps. <i>HR admins.</i></p></div>
+    <div class="card"><b>The users of the output</b><p>Show what's actually needed. <i>Managers.</i></p></div>
+    <div class="card"><b>The owner</b><p>Defines success and limits. <i>Head of HR.</i></p></div>
+    <div class="card"><b>IT and risk</b><p>Can stop you late if skipped early. <i>Data protection, cloud team.</i></p></div>
+  </div>
+  <p>Aim for <b>6 to 10 conversations</b> of 30 minutes. After about five on one theme you mostly hear repeats.</p>
+ </div>
 
-  <h3>2.2 How to run a good conversation</h3>
+ <div class="sub" data-id="interview" data-title="Interview well">
+  <h3 class="sub-title">Interview well</h3>
   <ul>
-    <li><b>Ask about the last time, not in general.</b> "Walk me through the last time you approved leave" gives facts; "How do you usually approve leave?" gives a tidy story.</li>
-    <li><b>Listen for workarounds.</b> A personal spreadsheet or a sticky note is a requirement nobody wrote down.</li>
-    <li><b>Ask to see the real files.</b> Looking at the actual form teaches more than a description of it.</li>
-    <li><b>Do not pitch your solution.</b> People then answer politely instead of honestly.</li>
-    <li><b>Ask "what happens then?" and "why?"</b> two or three times. Stay curious, not corrective.</li>
-    <li><b>Two people, one speaking.</b> One asks, the other writes down exact words.</li>
-    <li><b>Play it back.</b> Send a short summary within a day and ask "what did I get wrong?"</li>
+    <li><b>Ask about the last time,</b> not "usually". Facts beat tidy stories.</li>
+    <li><b>Listen for workarounds.</b> A personal spreadsheet is an unwritten requirement.</li>
+    <li><b>Ask to see the real files.</b></li>
+    <li><b>Don't pitch your idea.</b> People then answer politely, not honestly.</li>
+    <li><b>Two people:</b> one asks, one writes. <b>Play it back</b> within a day: "what did I get wrong?"</li>
   </ul>
-
   <h4>Question bank</h4>
   <div class="tabs" role="tablist" aria-label="Interview questions by group" data-tabs="q">
-    <button role="tab" aria-selected="true" data-tab="q1">Doing the work</button>
-    <button role="tab" aria-selected="false" data-tab="q2">Using the output</button>
-    <button role="tab" aria-selected="false" data-tab="q3">Owner / sponsor</button>
+    <button role="tab" aria-selected="true" data-tab="q1">Doers</button>
+    <button role="tab" aria-selected="false" data-tab="q2">Users of output</button>
+    <button role="tab" aria-selected="false" data-tab="q3">Owner</button>
     <button role="tab" aria-selected="false" data-tab="q4">IT / risk</button>
   </div>
   <div class="card panel" data-panel="q" id="q1"><ol>
-    <li>Walk me through the last time you did this, from the first trigger to the last step.</li>
-    <li>Which step takes the longest? Which one do you dread?</li>
-    <li>Where do mistakes or delays usually happen? What did the last one cost?</li>
-    <li>What do you keep outside the official system (notes, personal files)? Why?</li>
-    <li>What do you check before you trust a number or a form?</li>
-    <li>If you could change one thing tomorrow, what would it be?</li>
+    <li>Walk me through the last time you did this, start to finish.</li>
+    <li>Which step is slowest? Which do you dread?</li>
+    <li>Where do mistakes happen, and what did the last one cost?</li>
+    <li>What do you keep outside the official system, and why?</li>
   </ol></div>
   <div class="card panel" data-panel="q" id="q2" hidden><ol>
-    <li>What decision do you make with this information? When do you need it?</li>
-    <li>What do you do today when it is late or looks wrong?</li>
-    <li>Who do you ask when you do not understand it?</li>
+    <li>What decision do you make with this? When do you need it?</li>
+    <li>What do you do when it's late or looks wrong?</li>
     <li>What would make you trust it more?</li>
-    <li>What would you never want shown to others?</li>
+    <li>What must never be shown to others?</li>
   </ol></div>
   <div class="card panel" data-panel="q" id="q3" hidden><ol>
-    <li>What would make you say "this was worth it" in six months?</li>
-    <li>What is the cost of the problem today, in time, money, risk or reputation?</li>
-    <li>What must not change? What is open to change?</li>
-    <li>Who else must be on board for this to work?</li>
-    <li>What would make you stop this effort?</li>
+    <li>What would make you say "worth it" in six months?</li>
+    <li>What does the problem cost today (time, money, risk)?</li>
+    <li>What must not change? Who else must be on board?</li>
+    <li>What would make you stop?</li>
   </ol></div>
   <div class="card panel" data-panel="q" id="q4" hidden><ol>
-    <li>What data classes may a POC hold, and where may they be stored?</li>
-    <li>Which regions, naming rules and tags are mandatory?</li>
+    <li>What data may a POC hold, and where?</li>
+    <li>Which regions, tags and naming rules are mandatory?</li>
     <li>Which sign-in method must we use?</li>
-    <li>What reviews or approvals are needed before real users try it?</li>
-    <li>Who owns the system after the POC if it succeeds?</li>
+    <li>Who owns the system after the POC?</li>
   </ol></div>
+ </div>
 
-  <h3>2.3 Making sense of what you heard</h3>
-  <ol>
-    <li><b>Find the real problem with "five whys".</b> Ask why repeatedly until you reach a cause you could act on.
-      <div class="callout eg"><b class="l">LeaveLoop</b>Requests are approved late. Why? Managers do not see them. Why? They arrive by email among hundreds. Why? There is no single place that shows what awaits a decision. So the problem is visibility, not approval rules.</div></li>
-    <li><b>Draw the journey as it happens today:</b> one row per step, with who does it, what hurts, and the evidence (a quote, a number, a file).</li>
-    <li><b>Turn each pain into a "How might we…" question.</b> "How might we show managers what is waiting for them?" This keeps options open.</li>
-    <li><b>Write the problem in one sentence</b> and test it with two interviewees. If they do not nod, keep going.</li>
-  </ol>
-  <div class="table-wrap"><table>
-    <tr><th>Step today</th><th>Who</th><th>Pain</th><th>Evidence</th></tr>
-    <tr><td>Employee emails the manager</td><td>Employee</td><td>No confirmation it arrived</td><td>"I ask in the corridor if she saw it"</td></tr>
-    <tr><td>Manager replies, forwards to HR</td><td>Manager</td><td>Lost among other mail</td><td>3 of 4 managers keep a personal list</td></tr>
-    <tr><td>HR updates the master spreadsheet</td><td>HR admin</td><td>Retyping, clashes with other versions</td><td>Two files named "final"</td></tr>
-  </table></div>
-
-  <h3>2.4 Design thinking in five minutes</h3>
-  <p>Design thinking is a way of working that starts with people and tests ideas early and cheaply. It has five stages, and you move back and forth between them.</p>
-  <div class="grid g3">
-    <div class="card"><b>1 · Empathise</b><p>Understand people by listening and observing. (Part 2.1 to 2.2)</p></div>
-    <div class="card"><b>2 · Define</b><p>State the problem in one clear sentence. (2.3)</p></div>
-    <div class="card"><b>3 · Ideate</b><p>Generate many options before choosing one. Quantity first, judgement later.</p></div>
-    <div class="card"><b>4 · Prototype</b><p>Make a cheap version people can react to. (2.6)</p></div>
-    <div class="card"><b>5 · Test</b><p>Watch real people use it; learn; adjust.</p></div>
-    <div class="card"><b>Repeat</b><p>The first answer is rarely the final one. Plan for two rounds.</p></div>
+ <div class="sub" data-id="sense" data-title="Make sense of it">
+  <h3 class="sub-title">Make sense of it</h3>
+  <div class="grid g2">
+    <div class="card"><span class="num">1</span><b>Five whys</b><p>Ask "why?" until you reach a cause you can act on.</p></div>
+    <div class="card"><span class="num">2</span><b>Map the journey</b><p>One row per step: who, pain, evidence (a quote or number).</p></div>
+    <div class="card"><span class="num">3</span><b>"How might we…"</b><p>Turn each pain into an open question.</p></div>
+    <div class="card"><span class="num">4</span><b>One-sentence problem</b><p>Test it on two interviewees. If they don't nod, keep going.</p></div>
   </div>
+  <div class="callout eg"><b class="l">LeaveLoop, five whys</b>Requests are approved late → managers don't see them → they sit among hundreds of emails → no single list of what's waiting. <b>The problem is visibility, not approval rules.</b></div>
+  <div class="table-wrap"><table>
+    <tr><th>Step today</th><th>Pain</th><th>Evidence</th></tr>
+    <tr><td>Employee emails manager</td><td>No confirmation it arrived</td><td>"I ask in the corridor"</td></tr>
+    <tr><td>HR retypes into a master sheet</td><td>Clashing versions</td><td>Two files called "final"</td></tr>
+  </table></div>
+ </div>
 
-  <h4>The double diamond</h4>
-  <p>A useful picture of the same idea: open up, then narrow down, twice. First to find the <i>right problem</i>, then to find the <i>right solution</i>.</p>
-  <svg viewBox="0 0 640 170" role="img" aria-label="Double diamond: discover, define, develop, deliver" style="width:100%;max-width:640px">
+ <div class="sub" data-id="dt" data-title="Design thinking">
+  <h3 class="sub-title">Design thinking</h3>
+  <p>Start with people, test cheaply, repeat. Five stages, and you loop back often.</p>
+  <div class="chips"><span class="chip">1 Empathise</span><span class="arrow">→</span><span class="chip">2 Define</span><span class="arrow">→</span><span class="chip">3 Ideate</span><span class="arrow">→</span><span class="chip">4 Prototype</span><span class="arrow">→</span><span class="chip">5 Test</span></div>
+  <div class="grid g2">
+    <div class="card"><b>Double diamond</b><p>Open up, then narrow, twice: first to find the <i>right problem</i>, then the <i>right solution</i>.</p></div>
+    <div class="card"><b>Jobs to be done</b><p>Ask why someone would use it. Managers don't want a leave system; they want to <i>plan cover without chasing people</i>.</p></div>
+  </div>
+  <svg viewBox="0 0 640 150" role="img" aria-label="Double diamond: discover, define, develop, deliver" style="width:100%;max-width:560px">
     <g fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent)">
-      <path d="M10 85 L160 20 L160 150 Z"/><path d="M160 20 L300 85 L160 150"/>
-      <path d="M330 85 L480 20 L480 150 Z"/><path d="M480 20 L625 85 L480 150"/>
+      <path d="M10 75 L160 15 L160 135 Z"/><path d="M160 15 L300 75 L160 135"/>
+      <path d="M330 75 L480 15 L480 135 Z"/><path d="M480 15 L625 75 L480 135"/>
     </g>
     <g fill="currentColor" font-size="13" text-anchor="middle" style="color:var(--ink)">
-      <text x="110" y="90">Discover</text><text x="235" y="90">Define</text>
-      <text x="430" y="90">Develop</text><text x="555" y="90">Deliver</text>
-      <text x="170" y="165" fill="currentColor" font-size="11" style="color:var(--muted)">Right problem</text>
-      <text x="490" y="165" font-size="11" style="color:var(--muted)">Right solution</text>
+      <text x="110" y="80">Discover</text><text x="235" y="80">Define</text>
+      <text x="430" y="80">Develop</text><text x="555" y="80">Deliver</text>
     </g>
   </svg>
+ </div>
 
-  <h4>A useful question: what job is it hired to do?</h4>
-  <p>"Jobs to be done" asks why someone would use a tool, not what features it has. Managers do not want a leave system; they want to <i>plan team cover without chasing people</i>. The job shapes the priorities.</p>
-
-  <h3>2.5 Breaking the idea into parts</h3>
-  <h4>Roles and what each may do</h4>
+ <div class="sub" data-id="break" data-title="Break it down">
+  <h3 class="sub-title">Break it down</h3>
+  <h4>Roles</h4>
   <div class="table-wrap"><table>
-    <tr><th>Role</th><th>Can see</th><th>Can change</th></tr>
-    <tr><td>Employee</td><td>Own requests</td><td>Create and withdraw own requests</td></tr>
-    <tr><td>Manager</td><td>Their team's requests</td><td>Approve or decline</td></tr>
-    <tr><td>HR viewer</td><td>Everything, as summaries</td><td>Nothing</td></tr>
+    <tr><th>Role</th><th>Sees</th><th>Changes</th></tr>
+    <tr><td>Employee</td><td>Own requests</td><td>Create, withdraw</td></tr>
+    <tr><td>Manager</td><td>Team's requests</td><td>Approve, decline</td></tr>
+    <tr><td>HR viewer</td><td>Summaries</td><td>Nothing</td></tr>
   </table></div>
-  <h4>The workflow as states</h4>
+  <h4>Workflow as states</h4>
   <div class="chips"><span class="chip">Draft</span><span class="arrow">→</span><span class="chip">Submitted</span><span class="arrow">→</span><span class="chip">Approved</span><span class="arrow">or</span><span class="chip">Declined</span></div>
-  <p>For each arrow, write who may make the move. For each state, write who may change what. These two small tables become the rule book for the whole system.</p>
-  <h4>User stories</h4>
-  <p>One line per need: <i>As a [role], I want [action], so that [benefit].</i> "As a manager, I want to see waiting requests in one list, so that I can plan cover."</p>
-  <h4>Must, should, could, won't (this time)</h4>
-  <div class="grid g2">
-    <div class="card"><b>Must</b><ul><li>Employee submits a request</li><li>Manager approves or declines</li><li>History of who did what and when</li></ul></div>
-    <div class="card"><b>Should</b><ul><li>Email reminder to the manager</li><li>HR summary by month</li></ul></div>
-    <div class="card"><b>Could</b><ul><li>Calendar view of the team</li></ul></div>
-    <div class="card"><b>Won't (this time)</b><ul><li>Payroll link, mobile app, holiday rules by country</li></ul></div>
+  <p class="hint">For each arrow, write who may make the move. These small tables become the system's rule book.</p>
+  <h4>Must / should / could / won't</h4>
+  <div class="grid g4">
+    <div class="card"><b>Must</b><ul><li>Submit</li><li>Approve or decline</li><li>History</li></ul></div>
+    <div class="card"><b>Should</b><ul><li>Reminders</li><li>HR summary</li></ul></div>
+    <div class="card"><b>Could</b><ul><li>Team calendar</li></ul></div>
+    <div class="card"><b>Won't (now)</b><ul><li>Payroll, mobile</li></ul></div>
   </div>
-  <h4>The thin slice</h4>
-  <p>Choose the smallest path that goes all the way through: <i>an employee submits, a manager approves, HR sees it.</i> Build that completely before adding anything. It proves the idea, exposes the real obstacles early, and always leaves you with something to show.</p>
+  <div class="callout"><b class="l">Build the thin slice first</b>The smallest complete path: <i>employee submits → manager approves → HR sees it.</i> It proves the idea and always leaves you something to show.</div>
+ </div>
 
-  <h3>2.6 Cheap prototypes, early feedback</h3>
+ <div class="sub" data-id="proto" data-title="Prototype and test">
+  <h3 class="sub-title">Prototype and test</h3>
+  <div class="grid g2">
+    <div class="card"><b>Paper or slides</b><p>Sketch screens; walk someone through.</p></div>
+    <div class="card"><b>Clickable mock-up</b><p>Linked slides. Good for layout and wording.</p></div>
+    <div class="card"><b>"Wizard of Oz"</b><p>Looks real; a person does the work behind it. Tests the idea before the engine.</p></div>
+    <div class="card"><b>Working thin slice</b><p>The real thing, minimal, with fake data.</p></div>
+  </div>
   <ul>
-    <li><b>Paper or slides.</b> Sketch the main screens. Walk someone through them.</li>
-    <li><b>Clickable mock-up.</b> Linked slides or a design tool. Good for layout and wording.</li>
-    <li><b>"Wizard of Oz".</b> The screen looks real; a person does the work behind it. Tests whether the idea helps before you build the engine.</li>
-    <li><b>Working thin slice.</b> The real thing, minimal, with fake data.</li>
+    <li>Test with <b>3 to 5 people</b>. Give a task, then stay quiet.</li>
+    <li>Where they hesitate, the design needs work.</li>
+    <li>Write findings in their own words.</li>
   </ul>
-  <p>Test with <b>three to five</b> people. Ask them to complete a task and stay quiet. Where they hesitate is where the design needs work. Write each finding down with the person's own words.</p>
+ </div>
 
-  <h3>2.7 Working with the team</h3>
+ <div class="sub" data-id="team" data-title="Work as a team">
+  <h3 class="sub-title">Work as a team</h3>
   <ul>
-    <li><b>A one-page brief everyone has seen.</b> Template below. Update it when scope moves.</li>
-    <li><b>A weekly 20-minute show-and-tell.</b> Show what works; collect reactions; no slides.</li>
-    <li><b>A decision log.</b> Date, decision, why, who. It ends arguments about what was agreed.</li>
-    <li><b>Say "that's for later" kindly.</b> "Great idea; it's on the next-version list, and here's how we will judge when to do it."</li>
-    <li><b>Agree who decides what.</b> Who accepts scope changes? Who signs off the demo?</li>
-    <li><b>Share what you hear.</b> People contribute more when they see their input used.</li>
+    <li><b>One-page brief</b> everyone has seen (template below).</li>
+    <li><b>Weekly 20-minute show-and-tell.</b> Show what works; no slides.</li>
+    <li><b>Decision log:</b> date, decision, why, who. Ends "I thought we agreed…".</li>
+    <li><b>Say "that's for later" kindly:</b> "Great idea. It's on the next-version list."</li>
+    <li><b>Agree who decides</b> scope changes and signs off the demo.</li>
   </ul>
 <pre><code>POC BRIEF (one page)
 Question this POC answers:
 Users and roles:
-Workflow (states and who moves them):
-Data (what we store, fake or real):
+Workflow (states, who moves them):
+Data (what we store; fake or real):
 Must / Should / Could / Won't:
 Success measures:
 Time box and key dates:
 Decision owner:
 Risks and open questions:</code></pre>
-  <div class="table-wrap"><table>
-    <tr><th>Date</th><th>Decision</th><th>Why</th><th>Who</th></tr>
-    <tr><td>12 Mar</td><td>Declined leave must give a reason</td><td>Employees asked for transparency</td><td>HR lead</td></tr>
-  </table></div>
-
   <div class="layer t"><span class="tag">Technical detail</span>
-    <h4>From the brief to a data model</h4>
-    <p>Turn the nouns into tables and the states into a rule table. For LeaveLoop: <code>employees</code> (role, manager), <code>leave_requests</code> (employee, dates, status, decided_by, decided_at, reason), <code>audit_log</code> (who, what, old value, new value, when).</p>
+    <h4>From brief to data model</h4>
+    <p>Nouns become tables; states become a rule table. LeaveLoop: <code>employees</code>, <code>leave_requests</code> (status, decided_by, decided_at, reason), <code>audit_log</code>.</p>
     <ul>
-      <li><b>Key by the right thing.</b> If a status is stored "per employee", next year's request overwrites this year's. Key by what makes a record unique, usually unit <i>and</i> period.</li>
-      <li><b>Constraints in the database</b> (<code>CHECK</code> ranges, <code>UNIQUE</code>, foreign keys) catch mistakes the code misses.</li>
-      <li><b>Write the rule table first:</b> <code>(from_state, to_state) → roles allowed</code> and <code>state → role → writable fields</code>. Enforce it on the server.</li>
-      <li><b>Review the schema with a human before any screen is built.</b> It is the most expensive thing to change later.</li>
+      <li><b>Key by what makes a record unique</b>, usually unit <i>and</i> period, or next year overwrites this one.</li>
+      <li><b>Constraints in the database</b> (<code>CHECK</code>, <code>UNIQUE</code>, foreign keys) catch what code misses.</li>
+      <li><b>Rule table first:</b> <code>(from, to) → roles</code> and <code>state → role → fields</code>. Enforce on the server.</li>
+      <li><b>Review the schema with a human before any screen.</b> It's the costliest thing to change later.</li>
     </ul>
   </div>
+ </div>
 </section>
 
 <!-- ============================================================ 3 -->
-<section class="part" id="cost" data-title="3 · Choosing and costing">
+<section class="part" id="cost" data-title="3 · Choose and cost" data-blurb="Compare options, price the one you pick.">
   <div class="eyebrow">Part 3</div>
-  <h2>Choosing the approach, and what it will cost</h2>
-  <p class="lede">Before building on Azure, check that building is the right answer. Then choose the simplest design that answers the POC question, and price it honestly.</p>
+  <h2>Choose the approach, and price it</h2>
+  <p class="take">Check that building is the right answer. Then pick the <b>simplest design</b> that answers the question.</p>
 
-  <h3>3.1 The options on the table</h3>
+ <div class="sub" data-id="options" data-title="The options">
+  <h3 class="sub-title">The options</h3>
   <div class="table-wrap"><table>
     <tr><th>Option</th><th>Good when</th><th>Watch out for</th></tr>
-    <tr><td>Improve what you have (better spreadsheet, shared form)</td><td>The pain is mostly habit or clarity</td><td>Hits a ceiling on history, permissions and scale</td></tr>
-    <tr><td>Buy a product</td><td>A standard tool already fits 80 percent</td><td>Licence cost per user; hard to bend to your process</td></tr>
-    <tr><td>Low-code platform (forms and flows)</td><td>Simple process, quick need, citizen developers</td><td>Limits on rules, data and cost at scale</td></tr>
-    <tr><td>Build on Azure</td><td>Your process is specific; you need control of data, rules and history</td><td>Needs a builder and an owner; you maintain it</td></tr>
-    <tr><td>Do nothing (for now)</td><td>The problem is small or the timing is wrong</td><td>The cost of waiting; make it a conscious choice</td></tr>
+    <tr><td><b>Improve what you have</b></td><td>Pain is habit or clarity</td><td>Ceiling on history, permissions</td></tr>
+    <tr><td><b>Buy a product</b></td><td>A tool fits ~80%</td><td>Per-user cost; hard to bend</td></tr>
+    <tr><td><b>Low-code</b></td><td>Simple, quick need</td><td>Limits at scale</td></tr>
+    <tr><td><b>Build on Azure</b></td><td>Specific process; need control</td><td>You maintain it</td></tr>
+    <tr><td><b>Do nothing (for now)</b></td><td>Small problem, wrong timing</td><td>Cost of waiting</td></tr>
   </table></div>
+ </div>
 
-  <h3>3.2 Compare them fairly: a weighted decision matrix</h3>
-  <p>Pick the criteria that matter, give each a weight from 1 (minor) to 5 (critical), then score each option from 1 (poor) to 5 (excellent). The tool below does the arithmetic. <b>The example scores are placeholders, deliberately close; replace them with your own.</b> Do this with two or three colleagues, not alone, and discuss where you disagree: that is the useful part.</p>
-
+ <div class="sub" data-id="matrix" data-title="Compare fairly">
+  <h3 class="sub-title">Compare fairly</h3>
+  <p>Weight each criterion 1 to 5, score each option 1 to 5. <b>The example scores are placeholders, deliberately close.</b> Do it with two or three colleagues and discuss where you disagree.</p>
   <div class="tool" id="matrixTool">
     <h4>Decision matrix</h4>
     <div class="table-wrap"><table class="matrix" id="matrix"></table></div>
-    <p class="hint">Weights and scores run 1 to 5. Names are editable. Nothing leaves your browser.</p>
     <div class="noprint"><button type="button" class="btn" id="matrixReset">Reset example</button> <button type="button" class="btn primary" id="matrixAI">Copy as an AI prompt</button> <span class="hint" id="matrixMsg" role="status"></span></div>
+    <p class="hint">Names are editable. Nothing leaves your browser.</p>
   </div>
+ </div>
 
-  <h3>3.3 What a POC really costs</h3>
-  <div class="callout warn"><b class="l">The biggest cost is usually people</b>
-    A few weeks of a developer's and a subject lead's time typically cost many times more than the cloud bill for the same period. Include it, or the comparison is misleading.
+ <div class="sub" data-id="costs" data-title="What it costs">
+  <h3 class="sub-title">What it costs</h3>
+  <div class="callout warn"><b class="l">People are the biggest cost</b>A few weeks of a developer's and a subject lead's time usually cost many times the cloud bill. Include it.</div>
+  <div class="grid g2">
+    <div class="card"><b>What drives the Azure bill</b><ul><li>Hosting plan size (billed even if idle)</li><li>Database size</li><li>Security extras (firewalls, private networking, geo-backups)</li><li>Number of environments</li><li>Forgotten resources</li></ul></div>
+    <div class="card"><b>Guardrails</b><ul><li>Budget alert on day one (50 / 80 / 100%)</li><li>Tag everything with owner and cost centre</li><li>Diary a shut-down review date</li><li>One person owns the bill</li></ul></div>
   </div>
-  <h4>What drives the Azure bill</h4>
-  <ul>
-    <li><b>Size of the hosting plan.</b> You rent capacity whether anyone is using it or not.</li>
-    <li><b>Database size.</b> Also billed while idle.</li>
-    <li><b>Extras for security and resilience.</b> Firewalls, private networking and geographic backups are valuable and can cost more than the app itself.</li>
-    <li><b>How many environments you run</b> (demo, test, production).</li>
-    <li><b>Forgotten resources.</b> Experiments left running are the most common surprise.</li>
-  </ul>
-  <p>Free or very cheap tiers cover a POC well: a free static site, a small basic web plan, a small database. Plan to pay noticeably more only when real users and real data arrive.</p>
-
   <div class="tool" id="costTool">
     <h4>Rough monthly cost estimator</h4>
-    <p class="hint">Rounded planning figures in US dollars, to compare designs, <b>not a quote</b>. Prices vary by region, change over time and depend on usage. Confirm in the <b>Azure pricing calculator</b> before you commit.</p>
+    <p class="hint">Rounded US$ planning figures, <b>not a quote</b>. Confirm in the Azure pricing calculator.</p>
     <div class="noprint chips" id="presets"></div>
     <div class="fields" id="costFields"></div>
     <div class="fields" style="margin-top:12px">
-      <div><label for="envs">Environments (e.g. 2 = demo + test)</label><input type="number" id="envs" min="1" max="5" value="1"></div>
-      <div><label for="hrs">Build and support hours (one-off)</label><input type="number" id="hrs" min="0" step="10" value="160"></div>
-      <div><label for="rate">Blended cost per hour (US$)</label><input type="number" id="rate" min="0" step="5" value="60"></div>
+      <div><label for="envs">Environments</label><input type="number" id="envs" min="1" max="5" value="1"></div>
+      <div><label for="hrs">Build and support hours</label><input type="number" id="hrs" min="0" step="10" value="160"></div>
+      <div><label for="rate">Cost per hour (US$)</label><input type="number" id="rate" min="0" step="5" value="60"></div>
       <div><label for="months">POC length (months)</label><input type="number" id="months" min="1" max="24" value="3"></div>
     </div>
     <div class="out" id="costOut" aria-live="polite"></div>
   </div>
-
-  <h3>3.4 Choosing between Azure alternatives</h3>
-  <p>The principle: <b>choose the simplest service that answers the question, and leave the rest for later.</b> You can move up when you have evidence.</p>
-  <div class="table-wrap"><table>
-    <tr><th>Decision</th><th>Simplest choice</th><th>Move up when</th></tr>
-    <tr><td>Where the screens live</td><td>Static Web Apps (free)</td><td>You need server-rendered pages or a gateway in front</td></tr>
-    <tr><td>Where the logic runs</td><td>App Service (one small plan)</td><td>Containers (Container Apps) for many services; Functions for event-driven tasks</td></tr>
-    <tr><td>Where the data lives</td><td>Demo: a file database on the web app. POC with real-ish data: Azure SQL</td><td>PostgreSQL if your team standardises on it; Cosmos DB for very flexible or global data</td></tr>
-    <tr><td>Where files go</td><td>Blob Storage (private)</td><td>Immutable storage when records must not change</td></tr>
-    <tr><td>How people sign in</td><td>A simple login (demo only)</td><td>Microsoft Entra ID before real data</td></tr>
-    <tr><td>How secrets are kept</td><td>App settings (fake data only)</td><td>Key Vault before real data</td></tr>
-  </table></div>
-
-  <h3>3.5 Using AI to help you choose</h3>
-  <p>AI assistants are good thinking partners for this part of the work. Use them to widen and sharpen your thinking, and use people and official sources to decide and confirm.</p>
-  <div class="grid g2">
-    <div class="card"><b>Useful for</b><ul>
-      <li>Listing options you had not considered</li>
-      <li>Drafting criteria and weights for you to adjust</li>
-      <li>Explaining a pricing page or a service in plain words</li>
-      <li>Building a first-pass cost model with its assumptions listed</li>
-      <li>Challenging your choice: "what would make this fail?"</li>
-      <li>Turning interview notes into themes</li>
-    </ul></div>
-    <div class="card"><b>Be careful about</b><ul>
-      <li>Prices and limits: assistants can state them confidently and wrongly. Always confirm in the pricing calculator or with IT.</li>
-      <li>Confidential data: do not paste personal or sensitive information; use the invented example.</li>
-      <li>Out-of-date knowledge: products change.</li>
-      <li>Authority: the assistant suggests; your team decides and owns it.</li>
-    </ul></div>
+  <div class="layer t"><span class="tag">Technical detail</span>
+    <ul>
+      <li>Use the Azure pricing calculator with the right region; always-on is about 730 hours a month.</li>
+      <li>Biggest to smallest for this stack: App Service plan, SQL database, edge/WAF or private networking, monitoring ingestion. Storage and Key Vault are small.</li>
+      <li>Budget and tags: Cost Management in the portal; <code>--tags CostCenter=... Owner=...</code> at creation.</li>
+      <li>Log Analytics bills by data ingested; keep retention short for a POC.</li>
+    </ul>
   </div>
-  <h4>Prompts you can copy and adapt</h4>
+ </div>
+
+ <div class="sub" data-id="azure" data-title="Azure choices">
+  <h3 class="sub-title">Azure choices</h3>
+  <p>Choose the simplest service now; move up when evidence says so.</p>
+  <div class="table-wrap"><table>
+    <tr><th>Decision</th><th>Start with</th><th>Move up when</th></tr>
+    <tr><td>Screens</td><td>Static Web Apps (free)</td><td>You need a gateway or server-rendered pages</td></tr>
+    <tr><td>Logic</td><td>App Service, one small plan</td><td>Containers for many services; Functions for events</td></tr>
+    <tr><td>Data</td><td>Demo: a file database. Then Azure SQL</td><td>PostgreSQL by policy; Cosmos DB for flexible or global data</td></tr>
+    <tr><td>Files</td><td>Private Blob Storage</td><td>Immutable storage for records</td></tr>
+    <tr><td>Sign-in</td><td>Simple login (demo only)</td><td>Entra ID before real data</td></tr>
+    <tr><td>Secrets</td><td>App settings (fake data only)</td><td>Key Vault before real data</td></tr>
+  </table></div>
+ </div>
+
+ <div class="sub" data-id="ai" data-title="Use AI to help">
+  <h3 class="sub-title">Use AI to help</h3>
+  <div class="grid g2">
+    <div class="card"><b>Good for</b><ul><li>Options you missed</li><li>Drafting criteria and weights</li><li>Explaining pricing pages</li><li>A first cost model, assumptions listed</li><li>"What would make this fail?"</li><li>Themes from interview notes</li></ul></div>
+    <div class="card"><b>Be careful</b><ul><li><b>Prices and limits:</b> can be confidently wrong. Verify in the calculator or with IT.</li><li><b>Confidential data:</b> never paste it.</li><li><b>Authority:</b> it suggests; your team decides.</li></ul></div>
+  </div>
+  <h4>Copy-and-adapt prompts</h4>
   <div class="tabs" role="tablist" aria-label="Prompt templates" data-tabs="pr">
     <button role="tab" aria-selected="true" data-tab="pr1">Options</button>
     <button role="tab" aria-selected="false" data-tab="pr2">Criteria</button>
@@ -537,213 +535,186 @@ Risks and open questions:</code></pre>
     <button role="tab" aria-selected="false" data-tab="pr5">Interview themes</button>
   </div>
 <div class="panel" data-panel="pr" id="pr1"><pre><code>I need to [one-sentence problem] for about [number] users in [type of organisation].
-Constraints: [budget, timeline, data sensitivity, skills available].
-List 5 realistic approaches (including improving what we have and doing nothing),
-and for each give: when it fits, main risks, and what a 4-week test would look like.
-Do not recommend one yet. Mark anything you are unsure about.</code></pre></div>
-<div class="panel" data-panel="pr" id="pr2" hidden><pre><code>We are choosing between these options: [list].
-Propose 8 evaluation criteria for a proof of concept (not a production system),
-with a suggested weight from 1 to 5 and a one-line definition of what a score of 1, 3 and 5 means.
-Point out criteria that overlap or that I might be missing.</code></pre></div>
-<div class="panel" data-panel="pr" id="pr3" hidden><pre><code>Help me estimate the monthly cost of this design on Microsoft Azure:
-[front end host, API host, database, storage, monitoring, security extras], region [region],
+Constraints: [budget, timeline, data sensitivity, skills].
+List 5 realistic approaches (including improving what we have and doing nothing).
+For each: when it fits, main risks, and what a 4-week test would look like.
+Don't recommend one yet. Mark anything you're unsure about.</code></pre></div>
+<div class="panel" data-panel="pr" id="pr2" hidden><pre><code>We're choosing between: [options].
+Propose 8 criteria for a proof of concept (not production), each with a weight 1 to 5
+and what a score of 1, 3 and 5 means. Flag overlaps and anything I'm missing.</code></pre></div>
+<div class="panel" data-panel="pr" id="pr3" hidden><pre><code>Estimate the monthly cost of this design on Microsoft Azure:
+[front end, API host, database, storage, monitoring, security extras], region [region],
 about [n] users, [n] environments.
-List every assumption you make, give a low / expected / high range, and tell me which numbers
-I must verify in the Azure pricing calculator. Do not present any price as final.</code></pre></div>
-<div class="panel" data-panel="pr" id="pr4" hidden><pre><code>Here is our plan and the reasons we chose it: [paste].
-Act as a sceptical reviewer. Give the 5 strongest reasons this could fail or be the wrong choice,
-the evidence that would convince you otherwise, and the cheapest test for each.</code></pre></div>
+List every assumption, give low / expected / high, and say which numbers I must verify
+in the Azure pricing calculator. Don't present any price as final.</code></pre></div>
+<div class="panel" data-panel="pr" id="pr4" hidden><pre><code>Here is our plan and why we chose it: [paste].
+Act as a sceptical reviewer. Give the 5 strongest reasons it could fail or be the wrong choice,
+the evidence that would change your mind, and the cheapest test for each.</code></pre></div>
 <div class="panel" data-panel="pr" id="pr5" hidden><pre><code>Below are anonymised notes from [n] interviews (no names, no confidential data):
 [paste]
-Group them into themes, quote the exact phrases that support each theme, note where people disagree,
-and list questions I should have asked but did not.</code></pre></div>
-  <div class="callout"><b class="l">A good habit</b>
-    Keep a short note of what the AI suggested, what you verified, and what you changed. It shows your reasoning to the sponsor and protects you if a figure turns out to be off.
-  </div>
-
-  <h3>3.6 Guardrails against surprise costs</h3>
-  <ul>
-    <li>Set a <b>budget alert</b> on day one at 50, 80 and 100 percent.</li>
-    <li><b>Tag</b> every resource with an owner and cost centre.</li>
-    <li>Put a <b>review date</b> in the diary to shut down or scale down.</li>
-    <li>Keep one named person responsible for the bill.</li>
-  </ul>
-  <div class="layer t"><span class="tag">Technical detail</span>
-    <h4>Pricing and budgets</h4>
-    <ul>
-      <li>Use the Azure pricing calculator and pick the correct region. Check hours-per-month assumptions (730 for always-on).</li>
-      <li>Budget alert and tag: <code>az consumption budget</code> or Cost Management in the portal; tag at creation with <code>--tags CostCenter=... Owner=...</code>.</li>
-      <li>Cost drivers in order of size for this stack: App Service plan, SQL database, any edge/WAF or private networking, then monitoring ingestion. Storage and Key Vault are small at POC volumes.</li>
-      <li>Log Analytics bills by data ingested; keep retention short for a POC.</li>
-    </ul>
-  </div>
+Group them into themes with exact supporting quotes, note where people disagree,
+and list questions I should have asked.</code></pre></div>
+  <div class="callout"><b class="l">Good habit</b>Note what the AI suggested, what you verified and what you changed. It shows your reasoning to the sponsor.</div>
+ </div>
 </section>
 
 <!-- ============================================================ 4 -->
-<section class="part" id="pieces" data-title="4 · How the pieces fit">
+<section class="part" id="pieces" data-title="4 · How it fits together" data-blurb="Who does what inside the system.">
   <div class="eyebrow">Part 4</div>
   <h2>How the pieces fit together</h2>
-  <p class="lede">A web application, however modest, is a small team of specialists. Knowing who does what makes every later conversation with IT easier.</p>
+  <p class="take">A web app is a small team of specialists. Knowing who does what makes talking to IT easier.</p>
 
+ <div class="sub" data-id="picture" data-title="The big picture">
+  <h3 class="sub-title">The big picture</h3>
   <div class="flow" aria-label="Architecture overview">
     <div class="node"><b>The user's browser</b><small>The person using the tool</small></div>
     <div class="down">↓</div>
-    <div class="node"><b>The front desk</b><small><span class="pl">Shows the screens</span><span class="t" style="display:none">Azure Static Web Apps: hosts the built front end</span></small></div>
+    <div class="node"><b>The front desk</b><small><span class="pl">Shows the screens</span><span class="ti">Azure Static Web Apps</span></small></div>
     <div class="down">↓</div>
-    <div class="node"><b>The back office</b><small><span class="pl">Applies the rules: who may do what, in which order</span><span class="t" style="display:none">Azure App Service: runs the API, with a managed identity</span></small></div>
+    <div class="node"><b>The back office</b><small><span class="pl">Applies the rules: who may do what</span><span class="ti">Azure App Service (API) with a managed identity</span></small></div>
     <div class="down">↓</div>
     <div class="row">
-      <div class="node"><b>The filing room</b><small><span class="pl">Records and history</span><span class="t" style="display:none">Azure SQL Database</span></small></div>
-      <div class="node"><b>The safe</b><small><span class="pl">Passwords and keys</span><span class="t" style="display:none">Azure Key Vault</span></small></div>
-      <div class="node"><b>The storeroom</b><small><span class="pl">Uploaded documents</span><span class="t" style="display:none">Azure Blob Storage</span></small></div>
-      <div class="node side"><b>The security camera</b><small><span class="pl">Logs and alerts</span><span class="t" style="display:none">Application Insights + Log Analytics</span></small></div>
+      <div class="node"><b>Filing room</b><small><span class="pl">Records and history</span><span class="ti">Azure SQL Database</span></small></div>
+      <div class="node"><b>The safe</b><small><span class="pl">Passwords and keys</span><span class="ti">Azure Key Vault</span></small></div>
+      <div class="node"><b>Storeroom</b><small><span class="pl">Uploaded documents</span><span class="ti">Azure Blob Storage</span></small></div>
+      <div class="node side"><b>Security camera</b><small><span class="pl">Logs and alerts</span><span class="ti">Application Insights</span></small></div>
     </div>
   </div>
-
-  <div class="table-wrap"><table>
-    <tr><th>Piece</th><th>Plain meaning</th><th>Why it matters</th></tr>
-    <tr><td>Subscription</td><td>The billing account</td><td>Costs and limits are tracked here</td></tr>
-    <tr><td>Resource group</td><td>A folder holding everything for the project</td><td>Delete the folder to remove everything</td></tr>
-    <tr><td>Region</td><td>Which data centre</td><td>Organisations often restrict this</td></tr>
-    <tr><td>Managed identity</td><td>A staff badge for the application itself</td><td>The app can enter the filing room and the safe without a password anyone could steal</td></tr>
-    <tr><td>Role (access control)</td><td>What a badge opens</td><td>Give the least needed</td></tr>
-    <tr><td>Tags</td><td>Labels on resources</td><td>Cost tracing and ownership</td></tr>
-  </table></div>
-
   <div class="layer t"><span class="tag">Technical detail</span>
-    <h4>Reference services</h4>
     <div class="table-wrap"><table>
       <tr><th>Service</th><th>POC setting</th><th>Notes</th></tr>
-      <tr><td>Static Web Apps</td><td>Free</td><td>Built files uploaded with a deployment token</td></tr>
-      <tr><td>App Service (Linux)</td><td>B1, Python 3.12 (or Node/.NET)</td><td>HTTPS only, TLS 1.2, FTPS disabled, health check path, system-assigned identity</td></tr>
-      <tr><td>Azure SQL Database</td><td>S0; Entra-only authentication</td><td>Optional ledger tables for tamper-evident audit data</td></tr>
-      <tr><td>Key Vault</td><td>Standard; role-based access</td><td>Soft delete on</td></tr>
-      <tr><td>Storage account</td><td>Standard LRS; private containers</td><td>No public blob access, no shared keys, versioning and soft delete</td></tr>
-      <tr><td>Application Insights</td><td>Linked to a Log Analytics workspace</td><td>Short retention for a POC</td></tr>
+      <tr><td>Static Web Apps</td><td>Free</td><td>Built files uploaded with a token</td></tr>
+      <tr><td>App Service (Linux)</td><td>B1, Python 3.12 / Node / .NET</td><td>HTTPS only, TLS 1.2, FTPS off, health check, system identity</td></tr>
+      <tr><td>Azure SQL</td><td>S0, Entra-only auth</td><td>Optional ledger audit tables</td></tr>
+      <tr><td>Key Vault</td><td>Standard, role-based</td><td>Soft delete on</td></tr>
+      <tr><td>Storage</td><td>Standard LRS, private</td><td>No public access or shared keys</td></tr>
+      <tr><td>App Insights</td><td>Linked to Log Analytics</td><td>Short retention</td></tr>
     </table></div>
-    <p>Keep every environment difference (database address, secrets, allowed origins, demo-data switch) in environment variables read in <b>one config file</b>. The same code then runs locally, in the demo and in production.</p>
+    <p>Keep every environment difference (database address, secrets, allowed origins, demo-data switch) in environment variables read by <b>one config file</b>.</p>
   </div>
+ </div>
+
+ <div class="sub" data-id="terms" data-title="Key terms">
+  <h3 class="sub-title">Key terms</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Term</th><th>Plain meaning</th><th>Why it matters</th></tr>
+    <tr><td>Subscription</td><td>The billing account</td><td>Costs and limits live here</td></tr>
+    <tr><td>Resource group</td><td>A folder for the project</td><td>Delete it to remove everything</td></tr>
+    <tr><td>Region</td><td>Which data centre</td><td>Often restricted</td></tr>
+    <tr><td>Managed identity</td><td>A staff badge for the app</td><td>Opens the filing room and safe with no stealable password</td></tr>
+    <tr><td>Role</td><td>What a badge opens</td><td>Give the least needed</td></tr>
+    <tr><td>Tags</td><td>Labels on resources</td><td>Cost tracing, ownership</td></tr>
+  </table></div>
+ </div>
 </section>
 
 <!-- ============================================================ 5 -->
-<section class="part" id="access" data-title="5 · Getting access">
+<section class="part" id="access" data-title="5 · Getting access" data-blurb="Why waiting for permission slows most POCs.">
   <div class="eyebrow">Part 5</div>
-  <h2>Getting access, and why to ask early</h2>
-  <p class="lede">The most common reason a POC slips is not the building. It is waiting for permission.</p>
+  <h2>Getting access, early</h2>
+  <p class="take">The usual reason a POC slips isn't the building. It's <b>waiting for permission.</b></p>
 
-  <p>Inside an organisation's cloud, three levels of permission matter, and the person building usually has only the first:</p>
+ <div class="sub" data-id="levels" data-title="Three levels">
+  <h3 class="sub-title">Three levels of permission</h3>
   <div class="grid g3">
-    <div class="card"><b>1 · Create things</b><p>Make the web app, the database and the storage. Usually granted for one project folder.</p></div>
-    <div class="card"><b>2 · Let things talk to each other safely</b><p>Allow the application to open the safe and the filing room without a password. Needs a higher permission that IT guards.</p></div>
-    <div class="card"><b>3 · Organisation-wide settings</b><p>Switching on services for the whole subscription. Held by very few people.</p></div>
+    <div class="card"><span class="num">1</span><b>Create things</b><p>Web app, database, storage. Usually granted for one project folder.</p></div>
+    <div class="card"><span class="num">2</span><b>Let things talk safely</b><p>Allow the app to open the safe without a password. IT guards this.</p></div>
+    <div class="card"><span class="num">3</span><b>Organisation-wide</b><p>Switching on services for the whole subscription. Very few people.</p></div>
   </div>
-  <p>A POC can proceed with level 1 alone, using simpler settings and fake data. Levels 2 and 3 are needed before anything real.</p>
-
-  <h3>Send these questions to IT on the first day</h3>
-  <p>Copy, paste, and send. Do not wait until you need the answers.</p>
-<pre><code>Hello,
-
-We are starting a short proof of concept [one-line description] using fake data only.
-Could you help with the following?
-
-1. Which subscription and resource group should we use, and which regions are approved?
-2. Are there mandatory tags (for example cost centre and owner) or a naming standard?
-3. Are Azure Static Web Apps allowed, or must the front end sit behind another gateway?
-4. Can I be given permission to create role assignments, or who can create them for us?
-5. Are private networking or a web application firewall required even for a POC?
-6. Which sign-in method must we use if real users are involved?
-7. Are there limits on what data a POC may hold?
-8. Is my access time-limited (activated per session)? If so, how do I activate it?
-
-Our target is to have a demo ready by [date]. Many thanks.</code></pre>
-
-  <div class="callout warn"><b class="l">Allow for time-limited access</b>
-    Some organisations grant powerful roles only for a few hours at a time, activated on request. If something that worked in the morning is denied in the afternoon, the role has probably expired; activate it again.
-  </div>
-
+  <p>A POC can start with level 1 and fake data. Levels 2 and 3 are needed before anything real.</p>
+  <div class="callout warn"><b class="l">Time-limited access</b>Some roles last only hours and must be re-activated. If it worked this morning and fails now, re-activate it.</div>
   <div class="layer t"><span class="tag">Technical detail</span>
-    <h4>Roles and tools</h4>
     <div class="table-wrap"><table>
       <tr><th>To do this</th><th>You need</th></tr>
-      <tr><td>Create resources in a resource group</td><td>Contributor on the group</td></tr>
-      <tr><td>Create role assignments (managed identity to Key Vault / Blob)</td><td>Owner, User Access Administrator or RBAC Administrator on the group</td></tr>
-      <tr><td>Write Key Vault secrets and blob data</td><td>Key Vault Secrets Officer; Storage Blob Data Contributor (data-plane roles, separate from Contributor)</td></tr>
+      <tr><td>Create resources</td><td>Contributor on the resource group</td></tr>
+      <tr><td>Create role assignments</td><td>Owner, User Access Administrator or RBAC Administrator</td></tr>
+      <tr><td>Write Key Vault secrets / blob data</td><td>Key Vault Secrets Officer; Storage Blob Data Contributor</td></tr>
       <tr><td>Register resource providers</td><td>Contributor/Owner at <i>subscription</i> level</td></tr>
-      <tr><td>Use Microsoft Graph (<code>az ad ...</code>)</td><td>Allowed by conditional access; often blocked on managed laptops</td></tr>
+      <tr><td>Microsoft Graph (<code>az ad</code>)</td><td>Allowed by conditional access</td></tr>
     </table></div>
-    <p>Tools: Azure CLI, Git, Node 20+, your language runtime. Open a <b>new terminal</b> after installing each so it is found.</p>
-    <p><b>If database tokens are blocked on your laptop</b> (conditional access), use the in-app setup route described in Part 7, stage 2. <b>If Graph is blocked</b>, read your object id from the <code>oid</code> claim of your Azure Resource Manager token.</p>
     <pre><code>az login
 az account set --subscription "&lt;id or name&gt;"
-az account show -o table      # confirm tenant and subscription before changing anything</code></pre>
+az account show -o table      # confirm tenant and subscription first</code></pre>
+    <p>Tools: Azure CLI, Git, Node 20+, your runtime. Open a <b>new terminal</b> after installing. If database tokens are blocked on your laptop, use the in-app setup in Part 7. If Graph is blocked, read your object id from the <code>oid</code> claim of your ARM token.</p>
   </div>
+ </div>
+
+ <div class="sub" data-id="email" data-title="Email to IT">
+  <h3 class="sub-title">Email to IT</h3>
+  <p>Send this on day one. Don't wait until you need the answers.</p>
+<pre><code>Hello,
+
+We're starting a short proof of concept [one line] using fake data only. Could you help with:
+
+1. Which subscription and resource group, and which regions are approved?
+2. Mandatory tags (cost centre, owner) or a naming standard?
+3. Are Azure Static Web Apps allowed, or must the front end sit behind a gateway?
+4. Can I create role assignments, or who can for us?
+5. Is private networking or a web application firewall required for a POC?
+6. Which sign-in method if real users are involved?
+7. Any limits on what data a POC may hold?
+8. Is my access time-limited? How do I activate it?
+
+Target: demo ready by [date]. Many thanks.</code></pre>
+ </div>
 </section>
 
 <!-- ============================================================ 6 -->
-<section class="part" id="build" data-title="6 · Building it">
+<section class="part" id="build" data-title="6 · Building it" data-blurb="Seven steps, foundations first.">
   <div class="eyebrow">Part 6</div>
   <h2>Building it: the order that works</h2>
-  <p class="lede">Build foundations first. Each step ends with something a non-technical colleague can review.</p>
+  <p class="take">Foundations first. Each step ends with something a non-technical colleague can review.</p>
 
-  <ol class="steps">
-    <li><b>The records</b>Decide what is stored and how records relate. Review it with the subject lead. This is the hardest thing to change later.</li>
-    <li><b>The rule book</b>Write who may do what, in which state. Put the rules in one place the whole system obeys.</li>
-    <li><b>The history</b>Every change is recorded: who, what, before, after, when. Nothing is silently overwritten.</li>
-    <li><b>Who is who</b>A simple sign-in for the POC, shaped so a proper one can replace it later.</li>
-    <li><b>The main journey</b>The thin slice from Part 2, then other roles.</li>
-    <li><b>Safety nets</b>Automatic tests for the rules that would quietly corrupt data if wrong, including checks that forbidden actions are refused.</li>
-    <li><b>Demo data</b>An invented dataset that covers every state, so any reviewer sees every screen in a minute.</li>
-  </ol>
-
-  <div class="callout eg"><b class="l">LeaveLoop</b>
-    Records: employees, requests. Rules: only a manager can approve, only their own team, only a submitted request. History: "Priya approved Sam's request on 4 March". Tests: an employee cannot approve their own request. Demo data: requests in every state.
+ <div class="sub" data-id="steps" data-title="Seven steps">
+  <h3 class="sub-title">Seven steps</h3>
+  <div class="grid g2">
+    <div class="card"><span class="num">1</span><b>The records</b><p>What's stored and how it relates. Review with the subject lead; hardest to change later.</p></div>
+    <div class="card"><span class="num">2</span><b>The rule book</b><p>Who may do what, in which state. One place the whole system obeys.</p></div>
+    <div class="card"><span class="num">3</span><b>The history</b><p>Every change: who, what, before, after, when. Nothing silently overwritten.</p></div>
+    <div class="card"><span class="num">4</span><b>Who is who</b><p>Simple sign-in for the POC, shaped so a proper one can replace it.</p></div>
+    <div class="card"><span class="num">5</span><b>The main journey</b><p>The thin slice, then other roles.</p></div>
+    <div class="card"><span class="num">6</span><b>Safety nets</b><p>Automatic tests for rules that would quietly corrupt data, including that forbidden actions are refused.</p></div>
+    <div class="card"><span class="num">7</span><b>Demo data</b><p>Invented data covering every state, so any reviewer sees every screen in a minute.</p></div>
   </div>
-
-  <div class="callout warn"><b class="l">Why rules must live on the server</b>
-    Hiding a button is courtesy, not security. Anyone can send a request to the system directly, so the system itself must refuse what is not allowed.
-  </div>
-
-  <p><b>Deploy an empty skeleton in week one.</b> Problems with permissions, regions and policy show up early, when the app is empty, not the night before the demo.</p>
-
+  <div class="callout warn"><b class="l">Rules live on the server</b>Hiding a button is courtesy, not security. Anyone can call the system directly, so the system itself must refuse what isn't allowed.</div>
+  <div class="callout"><b class="l">Deploy an empty skeleton in week one</b>Permission, region and policy problems show up early, not the night before the demo.</div>
   <div class="layer t"><span class="tag">Technical detail</span>
     <ol>
-      <li><b>Schema first</b> (SQLite locally, Azure SQL in the cloud). Plain SQL in a portable subset (<code>?</code> placeholders, no <code>ON CONFLICT</code>/<code>MERGE</code>); one small file that knows the dialect differences; a test that fails if the two schema files drift.</li>
-      <li><b>Rule table</b>: <code>TRANSITIONS: (from, to) → roles</code> and <code>EDITABLE: state → role → fields</code>, validated in the API for every write. Return 403 for role problems and 409 for state problems.</li>
-      <li><b>Audit</b>: one row per changed field, written in the <b>same transaction</b> as the change; if nothing changed, write nothing. Append-only (ledger table on Azure SQL).</li>
-      <li><b>Auth</b>: signed, expiring tokens; keep <code>current_user</code> and <code>require_roles</code> as the only things routes depend on, so Entra ID can replace the login.</li>
-      <li><b>Tests</b>: rules, permissions (including the must-be-refused cases), scoring or calculations. Run on every change.</li>
-      <li><b>Seed script</b>: idempotent, gated by a setting (<code>SEED_DEMO_DATA</code>), only on an empty database.</li>
-      <li><b>Operations</b>: <code>/health</code> and <code>/health/db</code> from day one; configuration in environment variables; a single entry point for database access.</li>
+      <li><b>Schema first</b> (SQLite locally, Azure SQL in cloud). Portable SQL (<code>?</code> placeholders, no <code>ON CONFLICT</code>/<code>MERGE</code>), one file that knows dialect differences, a test that fails if schema files drift.</li>
+      <li><b>Rule table:</b> <code>TRANSITIONS: (from, to) → roles</code>; <code>EDITABLE: state → role → fields</code>. 403 for role problems, 409 for state problems.</li>
+      <li><b>Audit:</b> one row per changed field, in the <b>same transaction</b>; write nothing if nothing changed. Append-only (ledger table on Azure SQL).</li>
+      <li><b>Auth:</b> signed, expiring tokens; routes depend only on <code>current_user</code> and <code>require_roles</code>, so Entra ID can replace the login.</li>
+      <li><b>Tests:</b> rules, permissions (including must-be-refused), calculations. Run on every change.</li>
+      <li><b>Seed:</b> idempotent, gated by <code>SEED_DEMO_DATA</code>, only on an empty database.</li>
+      <li><b>Operations:</b> <code>/health</code> and <code>/health/db</code> from day one; config in environment variables.</li>
     </ol>
   </div>
+ </div>
 </section>
 
 <!-- ============================================================ 7 -->
-<section class="part" id="deploy" data-title="7 · Putting it on Azure">
+<section class="part" id="deploy" data-title="7 · Putting it on Azure" data-blurb="First a quick demo, then the secure version.">
   <div class="eyebrow">Part 7</div>
   <h2>Putting it on Azure, in two stages</h2>
-  <p class="lede">First get something clickable quickly. Then make it properly secure. Do not skip the first stage, and do not mistake it for the second.</p>
+  <p class="take">First get something clickable <b>this week</b>. Then make it properly secure. Don't skip stage 1; don't mistake it for stage 2.</p>
 
+ <div class="sub" data-id="stages" data-title="Two stages">
+  <h3 class="sub-title">Two stages</h3>
   <div class="grid g2">
-    <div class="card"><h4 style="margin-top:0">Stage 1 · Demo</h4>
-      <p>Goal: a public link people can click this week.</p>
-      <ul><li>Fake data only</li><li>Simple shared login</li><li>Data held in a simple file on the web app</li><li>Secrets stored as settings</li></ul>
-      <p><b>Good for:</b> feedback sessions and the first demo.</p></div>
-    <div class="card"><h4 style="margin-top:0">Stage 2 · Proper</h4>
-      <p>Goal: safe enough to trust with real information.</p>
-      <ul><li>A managed database with change history</li><li>The application signs in with its own identity, no passwords</li><li>Secrets in a vault</li><li>Monitoring and a tested backup</li></ul>
-      <p><b>Needed before:</b> any real data or real users.</p></div>
+    <div class="card"><h4>Stage 1 · Demo</h4><p>A public link to click.</p><ul><li>Fake data only</li><li>Shared simple login</li><li>Data in a file on the web app</li><li>Secrets as settings</li></ul><p><b>For:</b> feedback and first demo.</p></div>
+    <div class="card"><h4>Stage 2 · Proper</h4><p>Safe enough for real information.</p><ul><li>Managed database with history</li><li>App signs in with its own identity</li><li>Secrets in a vault</li><li>Monitoring and a tested backup</li></ul><p><b>Needed before:</b> real data or users.</p></div>
   </div>
+ </div>
 
-  <p><b>What happens in Stage 1, in plain terms:</b> create a project folder; rent a small server for the back office; create a free place for the screens; give the back office its settings; upload the code; build the screens pointing at the back office; upload them; check that the health page says OK; try each role.</p>
-  <p><b>What changes in Stage 2:</b> a database is created, an administrator sets up its tables once, the application is given permission to read and write rows (but not to change the structure), secrets move to the vault, and the temporary demo shortcuts are removed.</p>
-
-  <div class="layer t"><span class="tag">Technical detail · Stage 1</span>
+ <div class="sub" data-id="s1" data-title="Stage 1: demo">
+  <h3 class="sub-title">Stage 1: demo</h3>
+  <p><b>In plain terms:</b> create a project folder, rent a small server for the back office, create a free place for the screens, give the back office its settings, upload the code, build the screens pointing at it, upload them, check the health page says OK, try each role.</p>
+  <div class="layer t"><span class="tag">Technical detail</span>
     <h4>Variables</h4>
 <pre><code>$RG   = "rg-leaveloop-poc"
 $LOC  = "&lt;approved region&gt;"
 $PLAN = "plan-leaveloop-poc"
-$APP  = "app-leaveloop-poc-&lt;unique&gt;"    # becomes &lt;APP&gt;.azurewebsites.net, globally unique
+$APP  = "app-leaveloop-poc-&lt;unique&gt;"   # becomes &lt;APP&gt;.azurewebsites.net, globally unique
 $SWA  = "swa-leaveloop-poc"</code></pre>
     <h4>1 · Group and plan</h4>
 <pre><code>az group create -n $RG -l $LOC --tags CostCenter=&lt;code&gt; Owner=&lt;you&gt;
@@ -752,264 +723,281 @@ az appservice plan create -g $RG -n $PLAN --is-linux --sku B1</code></pre>
 <pre><code>az staticwebapp create -g $RG -n $SWA -l &lt;swa region&gt; --sku Free
 $swaHost  = az staticwebapp show -g $RG -n $SWA --query defaultHostname -o tsv
 $swaToken = az staticwebapp secrets list -g $RG -n $SWA --query properties.apiKey -o tsv</code></pre>
-    <p>The token is a password. Do not commit it.</p>
+    <p>The token is a password. Don't commit it.</p>
     <h4>3 · The API web app</h4>
 <pre><code>az webapp create -g $RG -p $PLAN -n $APP --runtime "PYTHON:3.12"
 az webapp config set -g $RG -n $APP --startup-file "bash startup.sh"
 az webapp config appsettings set -g $RG -n $APP --settings `
   SCM_DO_BUILD_DURING_DEPLOYMENT=true ENABLE_ORYX_BUILD=true `
   "SECRET_KEY=&lt;long random string&gt;" "ALLOWED_ORIGINS=https://$swaHost"</code></pre>
-    <p><code>ENABLE_ORYX_BUILD=true</code> makes App Service install your requirements during a zip deploy. Without it the site returns 503.</p>
+    <p><code>ENABLE_ORYX_BUILD=true</code> makes App Service install requirements during a zip deploy. Without it: 503.</p>
     <h4>4 · Deploy the API</h4>
-    <p>Build the zip with the code, <code>requirements.txt</code> and the startup script at the <b>root</b>, forward-slash paths and LF line endings (use a script with Python's <code>zipfile</code>, not <code>Compress-Archive</code>).</p>
+    <p>Zip with code, <code>requirements.txt</code> and the startup script at the <b>root</b>, forward-slash paths, LF line endings. Build it with a script (Python <code>zipfile</code>), not <code>Compress-Archive</code>.</p>
 <pre><code>az webapp deploy -g $RG -n $APP --src-path ./deploy.zip --type zip --async true
-# poll https://$APP.azurewebsites.net/health  (first start installs packages: a few minutes)</code></pre>
+# poll https://$APP.azurewebsites.net/health (first start installs packages: a few minutes)</code></pre>
     <h4>5 · Build and publish the front end</h4>
 <pre><code>cd frontend
 $env:VITE_API_URL = "https://$APP.azurewebsites.net/api"   # baked in at build time
 npm ci
 npm run build
 npx --yes @azure/static-web-apps-cli deploy ./dist --deployment-token $swaToken --env production</code></pre>
-    <p>Anything with a <code>VITE_</code> (or similar) prefix is shipped to every browser: never put secrets there. Search the built bundle for the host name to confirm it points where you meant.</p>
+    <p>Anything with a <code>VITE_</code> prefix ships to every browser: no secrets. Search the bundle for the host name to confirm it points where you meant.</p>
     <h4>6 · Verify</h4>
     <ul>
-      <li><code>GET /health</code> is OK; sign in as each role; try one allowed and one forbidden action.</li>
-      <li>Network error in the browser but the API answers in <code>curl</code>: check CORS (<code>ALLOWED_ORIGINS</code> must hold the front end's exact URL).</li>
+      <li><code>GET /health</code> OK; sign in as each role; one allowed and one forbidden action.</li>
+      <li>Browser network error but <code>curl</code> works: check CORS (<code>ALLOWED_ORIGINS</code> must hold the exact front-end URL).</li>
     </ul>
 <pre><code>az webapp log config -g $RG -n $APP --docker-container-logging filesystem
 az webapp log tail   -g $RG -n $APP</code></pre>
-    <p>For a throwaway demo, keep the SQLite file on the web app's persistent <code>/home</code> disk (for example <code>/home/data/app.db</code>). It does not survive scaling to several instances, so move to Azure SQL as soon as the data matters.</p>
+    <p>For a throwaway demo, keep SQLite on the web app's persistent <code>/home</code> disk. It doesn't survive scaling to several instances, so move to Azure SQL once the data matters.</p>
   </div>
+ </div>
 
-  <div class="layer t"><span class="tag">Technical detail · Stage 2</span>
-    <h4>Database design</h4>
+ <div class="sub" data-id="s2" data-title="Stage 2: proper">
+  <h3 class="sub-title">Stage 2: proper</h3>
+  <p><b>What changes:</b> a managed database is created; an administrator sets up its tables once; the app is allowed to read and write rows but <b>not change the structure</b>; secrets move to a vault; demo shortcuts are removed.</p>
+  <div class="layer t"><span class="tag">Technical detail</span>
     <ul>
-      <li><b>Microsoft Entra-only authentication</b> on the SQL server: no SQL logins exist.</li>
-      <li>A named person (ideally a group) is the SQL admin.</li>
-      <li>The API's <b>managed identity</b> is a database user with <b>read and write on tables only</b>. It cannot change the schema.</li>
-      <li>Optional <b>ledger</b> audit tables: <code>WITH (LEDGER = ON (APPEND_ONLY = ON))</code>. Tampering becomes <i>detectable</i>, not impossible; the proof is only as strong as where the digests are kept.</li>
+      <li><b>Entra-only authentication</b> on the SQL server: no SQL logins exist.</li>
+      <li>A named person (ideally a group) is SQL admin.</li>
+      <li>The API's <b>managed identity</b> is a database user with <b>read/write on tables only</b>.</li>
+      <li>Optional <b>ledger</b> audit tables: <code>WITH (LEDGER = ON (APPEND_ONLY = ON))</code>. Tampering becomes <i>detectable</i>, not impossible.</li>
     </ul>
     <h4>One-off table setup</h4>
-    <p><b>Option A, from your machine</b> (if developer machines may obtain database tokens): add your IP to the server firewall, <code>az login --scope https://database.windows.net/.default</code>, run your setup script as the admin, create the API's user, then remove the firewall rule.</p>
-    <p><b>Option B, from inside the web app</b> (when conditional access blocks A):</p>
+    <p><b>A, from your machine</b> (if developer machines may get database tokens): add your IP to the firewall, <code>az login --scope https://database.windows.net/.default</code>, run setup as admin, create the API's user, remove the firewall rule.</p>
+    <p><b>B, from inside the web app</b> (when conditional access blocks A):</p>
     <ol>
-      <li>Make the web app's identity the <b>temporary</b> SQL admin (a management call, no database sign-in):
+      <li>Make the app's identity the <b>temporary</b> SQL admin (management call, no database sign-in):
 <pre><code>az sql server ad-admin create -g $RG -s &lt;sql server&gt; --display-name $APP --object-id &lt;app principal id&gt;</code></pre></li>
-      <li>Run setup at the app's start, controlled by a setting such as <code>SETUP_MODE=real</code>: create tables, seed reference data, grant the identity read/write. If <code>CREATE USER ... FROM EXTERNAL PROVIDER</code> fails ("Server identity is not configured"), create the user from the identity's <b>client id</b> (<code>CREATE USER [name] WITH SID = ..., TYPE = E</code>).</li>
-      <li>Watch the setup log until it reports success.</li>
-      <li><b>Restore the human admin</b> and <b>delete the setup settings</b>; restart.</li>
+      <li>Run setup at start, controlled by e.g. <code>SETUP_MODE=real</code>: create tables, seed reference data, grant the identity read/write. If <code>FROM EXTERNAL PROVIDER</code> fails ("Server identity is not configured"), create the user from the identity's <b>client id</b> (<code>CREATE USER [name] WITH SID = ..., TYPE = E</code>).</li>
+      <li>Watch the setup log until it succeeds.</li>
+      <li><b>Restore the human admin</b>, <b>delete the setup settings</b>, restart.</li>
       <li>Confirm <code>/health/db</code> reports the Azure SQL database.</li>
     </ol>
-    <p>Rehearse on a throwaway database whose name ends in <code>_test</code>, and make any destructive reset command refuse to run elsewhere.</p>
-    <h4>Connection</h4>
-    <p>Set the server and database name as app settings; use the <code>ActiveDirectoryMSI</code> authentication mode on Azure (<code>ActiveDirectoryDefault</code> locally after <code>az login</code>). With no server configured, fall back to SQLite so local development and tests need nothing.</p>
-    <h4>Secrets</h4>
+    <p>Rehearse on a throwaway database named <code>*_test</code>, and make any destructive reset refuse to run elsewhere. Connect with <code>ActiveDirectoryMSI</code> on Azure (<code>ActiveDirectoryDefault</code> locally). With no server configured, fall back to SQLite.</p>
+  </div>
+ </div>
+
+ <div class="sub" data-id="s3" data-title="Secrets and templates" data-tech>
+  <h3 class="sub-title">Secrets and templates</h3>
+  <div class="layer always"><span class="tag">Technical detail</span>
     <div class="table-wrap"><table>
       <tr><th>Stage</th><th>Where secrets live</th></tr>
-      <tr><td>Local</td><td>Environment variables or an untracked <code>.env</code></td></tr>
+      <tr><td>Local</td><td>Environment variables or untracked <code>.env</code></td></tr>
       <tr><td>Demo, fake data</td><td>App settings, typed by the owner, never in the repo</td></tr>
       <tr><td>Anything real</td><td>Key Vault, referenced from app settings</td></tr>
     </table></div>
-    <p>Reference syntax: <code>@Microsoft.KeyVault(VaultName=&lt;vault&gt;;SecretName=&lt;name&gt;)</code>; the API's identity needs Key Vault Secrets User. <b>Verify it resolved</b>, otherwise the app silently uses the literal text as its secret:</p>
+    <p>Reference syntax: <code>@Microsoft.KeyVault(VaultName=&lt;vault&gt;;SecretName=&lt;name&gt;)</code>; the app's identity needs Key Vault Secrets User. <b>Verify it resolved</b>, or the app silently uses the literal text as its secret:</p>
 <pre><code>az rest --method get --url "https://management.azure.com/subscriptions/&lt;SUB&gt;/resourceGroups/$RG/providers/Microsoft.Web/sites/$APP/config/configreferences/appsettings?api-version=2022-03-01" --query "value[].{setting:name,status:properties.status}" -o table</code></pre>
-    <p>If the status is <code>AccessToKeyVaultDenied</code> after the role exists, re-running the same deployment (which re-saves the settings) fixes it; a plain restart may not.</p>
-    <h4>Infrastructure as code (optional but recommended)</h4>
-    <p>Describe resources in a Bicep file with one parameter file per environment; run a dry run first.</p>
+    <p>If it shows <code>AccessToKeyVaultDenied</code> after the role exists, re-run the same deployment (it re-saves settings); a restart may not help.</p>
+    <h4>Infrastructure as code (Bicep)</h4>
 <pre><code>az deployment group what-if -g $RG -f main.bicep -p poc.bicepparam   # lists changes, makes none
 az deployment group create  -g $RG -f main.bicep -p poc.bicepparam</code></pre>
     <ul>
-      <li>Generate names from a prefix, the environment and a short hash of the resource group id.</li>
-      <li>Apply the same tags to everything through one parameter.</li>
-      <li>Guard role assignments with a switch (<code>createRoleAssignments</code>) so the template still deploys when you may not create them.</li>
-      <li>Look up built-in role ids: <code>az role definition list --name "Key Vault Secrets User" --query "[].name" -o tsv</code>.</li>
-      <li>What-if cannot see quota limits; if a deployment fails on size or region, change the parameter and re-run (it is declarative).</li>
+      <li>Names from a prefix, the environment and a short hash of the resource group id.</li>
+      <li>Same tags on everything via one parameter; no secrets in parameter files.</li>
+      <li>Guard role assignments with a switch (<code>createRoleAssignments</code>) so it still deploys when you may not create them.</li>
+      <li>Look up role ids: <code>az role definition list --name "Key Vault Secrets User" --query "[].name" -o tsv</code>.</li>
+      <li>What-if can't see quota limits; if a size or region fails, change the parameter and re-run.</li>
     </ul>
   </div>
+ </div>
 </section>
 
 <!-- ============================================================ 8 -->
-<section class="part" id="safe" data-title="8 · Keeping it safe">
+<section class="part" id="safe" data-title="8 · Keeping it safe" data-blurb="Habits that let a POC grow up safely.">
   <div class="eyebrow">Part 8</div>
   <h2>Keeping it safe</h2>
-  <p class="lede">A POC with fake data can be simple. The habits you form now decide how easily it grows up.</p>
+  <p class="take">A POC with fake data can be simple. The habits you form now decide how easily it grows up.</p>
 
+ <div class="sub" data-id="principles" data-title="Principles">
+  <h3 class="sub-title">Principles</h3>
   <div class="grid g2">
-    <div class="card"><b>Principles</b><ul>
-      <li><b>Least access.</b> Everyone and everything gets only what it needs.</li>
-      <li><b>No secrets in the open.</b> Never in code, chat, slides or tickets. The person who owns a password types it in.</li>
-      <li><b>The system enforces the rules,</b> not the screen.</li>
-      <li><b>Keep a record.</b> Every important change says who, what and when.</li>
-      <li><b>Fake data until approved.</b></li>
-    </ul></div>
-    <div class="card"><b>What "tamper-evident" means</b>
-      <p>A tamper-evident record is like a tamper-proof seal on a jar. It does not stop someone opening the jar, but you can tell if they did. It is a strong help to trust, and it works best alongside tight permissions about who can write at all.</p></div>
+    <div class="card"><b>Least access</b><p>Everyone and everything gets only what it needs.</p></div>
+    <div class="card"><b>No secrets in the open</b><p>Never in code, chat, slides or tickets. The owner types it in.</p></div>
+    <div class="card"><b>The system enforces the rules</b><p>Not the screen.</p></div>
+    <div class="card"><b>Keep a record</b><p>Every important change: who, what, when.</p></div>
   </div>
-
-  <h3>Before any real data arrives</h3>
-  <div class="table-wrap"><table>
-    <tr><th>Item</th><th>Why</th></tr>
-    <tr><td>Proper company sign-in (and a plan for outside partners)</td><td>Replace shared passwords; tie identities to roles</td></tr>
-    <tr><td>Secrets in a vault, with access granted by role</td><td>No secrets in settings</td></tr>
-    <tr><td>Database not open to the public internet</td><td>Remove the public path</td></tr>
-    <tr><td>Edge protection and a proper address (optional, by policy)</td><td>Defence at the front door</td></tr>
-    <tr><td>Locked storage for change-history proofs</td><td>Makes the tamper-evidence credible</td></tr>
-    <tr><td>Uploaded files in private storage with limited-time links</td><td>Out of the database; versioned</td></tr>
-    <tr><td>Backups across regions and a restore you have actually tested</td><td>Recovery</td></tr>
-    <tr><td>An owner, a runbook, and alerts</td><td>Someone is responsible</td></tr>
-    <tr><td>Data classification approved</td><td>Compliance</td></tr>
-  </table></div>
-
-  <div class="layer t"><span class="tag">Technical detail</span>
-    <h4>Baseline in the POC</h4>
+  <div class="callout eg"><b class="l">"Tamper-evident"</b>Like a seal on a jar: it doesn't stop someone opening it, but you can tell if they did. Works best with tight limits on who can write at all.</div>
+  <div class="layer t"><span class="tag">Technical detail: POC baseline</span>
     <ul>
-      <li>HTTPS only, TLS 1.2, FTPS disabled; health check path set.</li>
-      <li>Roles enforced on the server by role <i>and</i> workflow state; tests for the refusals.</li>
-      <li>Audit log in the same transaction; ledger on audit tables if using Azure SQL.</li>
-      <li>Managed identity for Azure-to-Azure access; no passwords in code.</li>
-      <li>Storage private, no shared keys; uploads limited by size and an allow-list of types (never executables or HTML).</li>
+      <li>HTTPS only, TLS 1.2, FTPS off, health check set.</li>
+      <li>Roles enforced on the server by role <i>and</i> workflow state; tests for refusals.</li>
+      <li>Audit log in the same transaction; ledger on audit tables.</li>
+      <li>Managed identity for Azure-to-Azure access.</li>
+      <li>Storage private, no shared keys; uploads limited by size and an allow-list (never executables or HTML).</li>
       <li>Front-end build variables are public: no secrets.</li>
     </ul>
-    <h4>Hardening list</h4>
+  </div>
+ </div>
+
+ <div class="sub" data-id="real" data-title="Before real data">
+  <h3 class="sub-title">Before real data</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Item</th><th>Why</th></tr>
+    <tr><td>Company sign-in (and a plan for outside partners)</td><td>Replace shared passwords</td></tr>
+    <tr><td>Secrets in a vault, access by role</td><td>No secrets in settings</td></tr>
+    <tr><td>Database off the public internet</td><td>Remove the public path</td></tr>
+    <tr><td>Edge protection, proper address (by policy)</td><td>Defence at the front door</td></tr>
+    <tr><td>Locked storage for change-history proofs</td><td>Makes tamper-evidence credible</td></tr>
+    <tr><td>Files in private storage, limited-time links</td><td>Out of the database; versioned</td></tr>
+    <tr><td>Cross-region backups, a restore you've tested</td><td>Recovery</td></tr>
+    <tr><td>Owner, runbook, alerts</td><td>Someone is responsible</td></tr>
+    <tr><td>Data classification approved</td><td>Compliance</td></tr>
+  </table></div>
+  <div class="layer t"><span class="tag">Technical detail: hardening</span>
     <ul>
       <li>Entra ID sign-in (external tenant for partners).</li>
-      <li>Private endpoints or a restricted SQL firewall; remove "allow Azure services".</li>
+      <li>Private endpoints or restricted SQL firewall; remove "allow Azure services".</li>
       <li>Front Door with WAF; custom domain.</li>
-      <li>Immutability (time-based retention) policy on the ledger digest container.</li>
+      <li>Time-based immutability policy on the ledger digest container.</li>
       <li>Blob uploads via short-lived links; geo-redundant backups; staging slot (Premium plan).</li>
     </ul>
   </div>
+ </div>
 </section>
 
 <!-- ============================================================ 9 -->
-<section class="part" id="demo" data-title="9 · Show it and decide">
+<section class="part" id="demo" data-title="9 · Show it and decide" data-blurb="Demo, measure, decision paper.">
   <div class="eyebrow">Part 9</div>
-  <h2>Showing it, judging it, deciding</h2>
-  <p class="lede">A POC exists to be judged. Plan the demo and the decision as carefully as the build.</p>
+  <h2>Show it, judge it, decide</h2>
+  <p class="take">A POC exists to be judged. Plan the demo and the decision as carefully as the build.</p>
 
-  <h3>The demo</h3>
+ <div class="sub" data-id="demo" data-title="The demo">
+  <h3 class="sub-title">The demo</h3>
   <ol>
-    <li><b>Start with the question,</b> in the sponsor's words, and the success measures you agreed.</li>
-    <li><b>Show the old way in 60 seconds,</b> with a real example of the pain.</li>
-    <li><b>Walk the thin slice as each role,</b> in the order a real request travels.</li>
-    <li><b>Show the history.</b> This is often what wins trust.</li>
-    <li><b>Show a refusal:</b> someone trying something not allowed, and the system saying no.</li>
+    <li><b>The question</b> in the sponsor's words, and the agreed success measures.</li>
+    <li><b>The old way</b> in 60 seconds, with a real example of the pain.</li>
+    <li><b>Walk the thin slice</b> as each role, in the order a request travels.</li>
+    <li><b>Show the history.</b> Often what wins trust.</li>
+    <li><b>Show a refusal:</b> someone trying something not allowed.</li>
     <li><b>Let a real user drive.</b></li>
-    <li><b>Finish with the measures,</b> what is still unknown, and what you recommend.</li>
+    <li><b>Finish with the measures,</b> what's unknown, and your recommendation.</li>
   </ol>
-  <p>Keep a recording as a fallback in case the connection fails.</p>
+  <p class="hint">Keep a recording as a fallback.</p>
+ </div>
 
-  <h3>The decision paper (one to two pages)</h3>
+ <div class="sub" data-id="paper" data-title="Decision paper">
+  <h3 class="sub-title">Decision paper (1 to 2 pages)</h3>
   <ul>
-    <li>The question and the answer: yes, no, or not yet.</li>
-    <li>Evidence against each success measure, and what users said in their own words.</li>
-    <li>What it would take to run for real: people, cost range, risks, owner.</li>
-    <li>Options: stop, extend the POC, run a pilot, or build for production.</li>
-    <li>The recommendation and the decision needed, with a date.</li>
+    <li><b>The answer:</b> yes, no, or not yet.</li>
+    <li><b>Evidence</b> against each success measure, plus users' own words.</li>
+    <li><b>What running it for real takes:</b> people, cost range, risks, owner.</li>
+    <li><b>Options:</b> stop, extend, pilot, or build for production.</li>
+    <li><b>Recommendation</b> and the decision needed, with a date.</li>
   </ul>
-
-  <div class="layer t"><span class="tag">Technical detail</span>
-    <h4>Monitoring and teardown</h4>
-    <pre><code>requests   | where success == false | summarize count() by name, resultCode, bin(timestamp, 1h)
+  <div class="layer t"><span class="tag">Technical detail: monitoring and teardown</span>
+<pre><code>requests   | where success == false | summarize count() by name, resultCode, bin(timestamp, 1h)
 exceptions | order by timestamp desc | take 50</code></pre>
     <ul>
-      <li>Alerts: health check failing, HTTP 5xx, database CPU/DTU above 80 percent.</li>
-      <li>Budget alert in Cost Management; confirm the tags are on every resource.</li>
-      <li>Teardown: <code>az group delete -n $RG</code> removes everything inside the group. Check the name twice. Key Vault soft delete keeps the vault name reserved for its retention period.</li>
+      <li>Alerts: health check failing, HTTP 5xx, database CPU/DTU over 80%.</li>
+      <li>Budget alert set; tags on every resource.</li>
+      <li>Teardown: <code>az group delete -n $RG</code> removes everything inside. Check the name twice. Key Vault soft delete keeps the vault name reserved for its retention period.</li>
     </ul>
   </div>
+ </div>
 </section>
 
 <!-- ============================================================ 10 -->
-<section class="part" id="trouble" data-title="10 · When things go wrong">
+<section class="part" id="trouble" data-title="10 · When things go wrong" data-blurb="Common problems and what to do.">
   <div class="eyebrow">Part 10</div>
   <h2>When things go wrong</h2>
-  <p class="lede">Most problems are common and have known causes.</p>
+  <p class="take">Most problems are common and have known causes.</p>
 
-  <h3>In plain words</h3>
+ <div class="sub" data-id="plain" data-title="Symptoms">
+  <h3 class="sub-title">Symptoms</h3>
   <div class="table-wrap"><table>
-    <tr><th>What you see</th><th>Usual reason</th><th>What to do</th></tr>
-    <tr><td>"I can't create this"</td><td>A permission or policy limit</td><td>Ask IT which role or region is allowed (Part 5)</td></tr>
-    <tr><td>It worked this morning, now "access denied"</td><td>Time-limited access expired</td><td>Activate the role again</td></tr>
-    <tr><td>The site shows an error right after upload</td><td>The server is still starting or set up incorrectly</td><td>Wait a few minutes, then ask the builder to check the health page</td></tr>
-    <tr><td>Screens load but nothing saves</td><td>The screens and the back office are not connected</td><td>Builder checks the address and allowed origins</td></tr>
-    <tr><td>The bill is higher than planned</td><td>Something left running</td><td>List resources by cost; scale down or delete</td></tr>
-    <tr><td>Everyone wants one more feature</td><td>Scope creep</td><td>Return to the "won't this time" list and decision log</td></tr>
-    <tr><td>Testers don't use it</td><td>It solves a problem they don't have</td><td>Go back to Part 2: re-interview, adjust the problem</td></tr>
+    <tr><th>What you see</th><th>Usual reason → what to do</th></tr>
+    <tr><td>"I can't create this"</td><td>Permission or policy limit → ask IT (Part 5)</td></tr>
+    <tr><td>Worked this morning, "access denied" now</td><td>Time-limited access expired → re-activate</td></tr>
+    <tr><td>Error right after upload</td><td>Server still starting or misconfigured → wait a few minutes, check the health page</td></tr>
+    <tr><td>Screens load, nothing saves</td><td>Screens and back office not connected → check address and allowed origins</td></tr>
+    <tr><td>Bill higher than planned</td><td>Something left running → list by cost; scale down or delete</td></tr>
+    <tr><td>Everyone wants one more feature</td><td>Scope creep → "won't this time" list, decision log</td></tr>
+    <tr><td>Testers don't use it</td><td>Wrong problem → back to Part 2, re-interview</td></tr>
   </table></div>
+ </div>
 
-  <div class="layer t"><span class="tag">Technical detail</span>
-    <div class="table-wrap"><table>
-      <tr><th>Symptom</th><th>Cause and fix</th></tr>
-      <tr><td>503 after a zip deploy</td><td>Packages not installed. Set <code>ENABLE_ORYX_BUILD=true</code></td></tr>
-      <tr><td>Startup script fails on Linux</td><td>CRLF line endings or backslash paths in the zip. Build the zip with a script</td></tr>
-      <tr><td>Deploy command hangs</td><td>Use <code>--async true</code>, poll <code>/health</code></td></tr>
-      <tr><td>Browser "cannot reach server", API works in curl</td><td>CORS origin mismatch, or a SQLite connection shared across threads (<code>check_same_thread=False</code>)</td></tr>
-      <tr><td>Front end calls the wrong API</td><td>The address is baked in at build time and an old <code>.env.production</code> won. Set the variable explicitly; search the bundle for the host</td></tr>
-      <tr><td><code>AuthorizationFailed</code> creating role assignments</td><td>Needs User Access Administrator or RBAC Administrator</td></tr>
-      <tr><td>Resource provider not registered</td><td>Subscription-level registration needed</td></tr>
-      <tr><td>Region or size not allowed</td><td>Policy; pick an allowed one</td></tr>
-      <tr><td>Key Vault reference not <code>Resolved</code></td><td>Missing or stale role; redeploy to re-save settings</td></tr>
-      <tr><td>No database token on your laptop</td><td>Conditional access; use the in-app setup (Option B)</td></tr>
-      <tr><td><code>az ad ...</code> fails</td><td>Graph blocked; use the token's <code>oid</code> claim, or read the id from inside the app</td></tr>
-      <tr><td><code>FROM EXTERNAL PROVIDER</code> fails</td><td>Create the user from the identity's client id</td></tr>
-      <tr><td>PowerShell breaks <code>--query</code> with <code>[?...]</code></td><td>Filter the JSON in PowerShell instead</td></tr>
-      <tr><td>Rules only in the UI</td><td>Anyone can call the API directly. Enforce on the server</td></tr>
-      <tr><td>Overwritten history</td><td>Keys that ignore the period (per unit instead of per unit per period). Fix before real data</td></tr>
-    </table></div>
-  </div>
+ <div class="sub" data-id="tech" data-title="Technical fixes" data-tech>
+  <h3 class="sub-title">Technical fixes</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Symptom</th><th>Cause and fix</th></tr>
+    <tr><td>503 after zip deploy</td><td>Packages not installed: set <code>ENABLE_ORYX_BUILD=true</code></td></tr>
+    <tr><td>Startup script fails on Linux</td><td>CRLF or backslash paths in the zip: build it with a script</td></tr>
+    <tr><td>Deploy hangs</td><td>Use <code>--async true</code>, poll <code>/health</code></td></tr>
+    <tr><td>Browser "cannot reach server", API fine in curl</td><td>CORS mismatch, or SQLite shared across threads (<code>check_same_thread=False</code>)</td></tr>
+    <tr><td>Front end calls the wrong API</td><td>Address baked in at build time; old <code>.env.production</code> won. Set the variable explicitly; search the bundle for the host</td></tr>
+    <tr><td><code>AuthorizationFailed</code> on role assignments</td><td>Need User Access Administrator or RBAC Administrator</td></tr>
+    <tr><td>Provider not registered</td><td>Subscription-level registration</td></tr>
+    <tr><td>Region or size not allowed</td><td>Policy: pick an allowed one</td></tr>
+    <tr><td>Key Vault reference not <code>Resolved</code></td><td>Missing/stale role: redeploy to re-save settings</td></tr>
+    <tr><td>No database token on laptop</td><td>Conditional access: use in-app setup (Option B)</td></tr>
+    <tr><td><code>az ad</code> fails</td><td>Graph blocked: use the token's <code>oid</code> claim</td></tr>
+    <tr><td><code>FROM EXTERNAL PROVIDER</code> fails</td><td>Create the user from the identity's client id</td></tr>
+    <tr><td>PowerShell breaks <code>--query</code> with <code>[?...]</code></td><td>Filter the JSON in PowerShell</td></tr>
+    <tr><td>Rules only in the UI</td><td>Anyone can call the API: enforce on the server</td></tr>
+    <tr><td>History overwritten</td><td>Keys ignore the period: fix before real data</td></tr>
+  </table></div>
+ </div>
 </section>
 
 <!-- ============================================================ 11 -->
-<section class="part" id="checklist" data-title="11 · Checklist and timeline">
+<section class="part" id="checklist" data-title="11 · Checklist and plan" data-blurb="Definition of done and a four-week plan.">
   <div class="eyebrow">Part 11</div>
-  <h2>Checklist and timeline</h2>
+  <h2>Checklist and four-week plan</h2>
 
+ <div class="sub" data-id="check" data-title="Definition of done">
+  <h3 class="sub-title">Definition of done</h3>
   <div class="tool" id="checkTool">
-    <h4>Definition of done <span class="pill" id="checkCount">0 of 0</span></h4>
+    <h4>Tick as you go <span class="pill" id="checkCount">0 of 0</span></h4>
     <div class="progress" aria-hidden="true"><i id="checkBar"></i></div>
     <ul class="check" id="checkList"></ul>
-    <p class="hint noprint">Your ticks are saved in this browser only.</p>
+    <p class="hint noprint">Saved in this browser only.</p>
     <button type="button" class="btn noprint" id="checkReset">Clear ticks</button>
   </div>
+ </div>
 
-  <h3>A four-week plan</h3>
+ <div class="sub" data-id="plan" data-title="Four-week plan">
+  <h3 class="sub-title">Four-week plan</h3>
   <div class="table-wrap"><table>
     <tr><th>Week</th><th>Focus</th><th>You should have</th></tr>
-    <tr><td>0</td><td>Frame and listen</td><td>The brief, interviews done, roles and workflow drawn, IT questions sent</td></tr>
-    <tr><td>1</td><td>Foundations</td><td>Records, rules, history, tests; an empty skeleton already on Azure</td></tr>
-    <tr><td>2</td><td>Main journey</td><td>The thin slice for every role, demo data, a first feedback session</td></tr>
-    <tr><td>3</td><td>Proper stage</td><td>Managed database, secrets in a vault, monitoring, insights views</td></tr>
-    <tr><td>4</td><td>Test and decide</td><td>Real users try it; measures collected; decision paper written</td></tr>
+    <tr><td>0</td><td>Frame and listen</td><td>Brief, interviews, roles and workflow drawn, IT questions sent</td></tr>
+    <tr><td>1</td><td>Foundations</td><td>Records, rules, history, tests; empty skeleton on Azure</td></tr>
+    <tr><td>2</td><td>Main journey</td><td>Thin slice for every role, demo data, first feedback</td></tr>
+    <tr><td>3</td><td>Proper stage</td><td>Managed database, vault, monitoring, insight views</td></tr>
+    <tr><td>4</td><td>Test and decide</td><td>Real users, measures collected, decision paper</td></tr>
   </table></div>
+ </div>
 </section>
 
 <!-- ============================================================ GLOSSARY -->
 <section class="part" id="glossary" data-title="Glossary">
+ <div class="sub" data-id="terms" data-title="Glossary">
   <div class="eyebrow">Reference</div>
   <h2>Glossary</h2>
   <dl class="gloss">
-    <dt>API</dt><dd>The back office of an application: the part that applies the rules and talks to the data.</dd>
-    <dt>Audit log</dt><dd>A record of every important change: who, what, before, after, when.</dd>
+    <dt>API</dt><dd>The back office: applies the rules and talks to the data.</dd>
+    <dt>Audit log</dt><dd>Record of every important change: who, what, before, after, when.</dd>
     <dt>Azure</dt><dd>Microsoft's cloud: rentable computing, storage and services.</dd>
-    <dt>Bicep</dt><dd>A text file that describes the cloud resources you want, so they can be created repeatably.</dd>
-    <dt>CORS</dt><dd>A browser safety rule about which web addresses may talk to the back office.</dd>
+    <dt>Bicep</dt><dd>A text file describing the cloud resources you want, so they can be recreated.</dd>
+    <dt>CORS</dt><dd>Browser rule about which web addresses may talk to the back office.</dd>
     <dt>Entra ID</dt><dd>Microsoft's company sign-in service.</dd>
     <dt>Key Vault</dt><dd>A safe for passwords and keys.</dd>
-    <dt>Ledger</dt><dd>A database feature that makes after-the-fact changes to history detectable.</dd>
-    <dt>Managed identity</dt><dd>A badge the application itself holds, so it needs no stored password.</dd>
+    <dt>Ledger</dt><dd>Database feature that makes after-the-fact changes to history detectable.</dd>
+    <dt>Managed identity</dt><dd>A badge the app itself holds, so no stored password.</dd>
     <dt>MoSCoW</dt><dd>Must, Should, Could, Won't: a way to rank features.</dd>
     <dt>POC</dt><dd>Proof of concept: a small, time-boxed test of whether an idea is worth pursuing.</dd>
-    <dt>Resource group</dt><dd>A folder that holds everything for one project in Azure.</dd>
-    <dt>Role (RBAC)</dt><dd>A named set of permissions that can be given to a person or application.</dd>
-    <dt>SKU</dt><dd>The size or tier of a service, which sets its capability and price.</dd>
+    <dt>Resource group</dt><dd>A folder holding everything for one project in Azure.</dd>
+    <dt>Role (RBAC)</dt><dd>A named set of permissions for a person or app.</dd>
+    <dt>SKU</dt><dd>The size or tier of a service; sets capability and price.</dd>
     <dt>Tag</dt><dd>A label on a resource, such as owner or cost centre.</dd>
     <dt>Thin slice</dt><dd>The smallest complete path through the system, built first.</dd>
-    <dt>WAF</dt><dd>Web application firewall: filters harmful traffic before it reaches the application.</dd>
+    <dt>WAF</dt><dd>Web application firewall: filters harmful traffic before it reaches the app.</dd>
   </dl>
-  <div class="foot">
-    <p>Cost figures in this guide are rounded planning figures, not quotes. Check Azure services, limits and prices in official Microsoft documentation and the Azure pricing calculator before committing. LeaveLoop is a fictional example.</p>
-  </div>
+ </div>
 </section>
+
+<nav class="pager" id="pager" aria-label="Previous and next"></nav>
 </main>
 </div>
 
@@ -1018,43 +1006,97 @@ exceptions | order by timestamp desc | take 50</code></pre>
   var root=document.documentElement;
   function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
 
+  /* ---------- structure ---------- */
+  var parts=[].slice.call(document.querySelectorAll('section.part'));
+  var byId={};parts.forEach(function(p){byId[p.id]=p});
+  var toc=document.getElementById('tocList'),mini=document.getElementById('miniToc'),subbar=document.getElementById('subtabs'),pager=document.getElementById('pager'),topBar=document.getElementById('topBar');
+
+  parts.forEach(function(p){
+    var li=document.createElement('li'),a=document.createElement('a');
+    a.href='#'+p.id;a.textContent=p.dataset.title;a.dataset.for=p.id;li.appendChild(a);toc.appendChild(li);
+    var o=document.createElement('option');o.value=p.id;o.textContent=p.dataset.title;mini.appendChild(o);
+  });
+  mini.addEventListener('change',function(){location.hash='#'+mini.value});
+
+  var tiles=document.getElementById('homeTiles');
+  parts.forEach(function(p){
+    if(p.id==='home'||p.id==='glossary')return;
+    var a=document.createElement('a');a.className='tile';a.href='#'+p.id;
+    var n=p.dataset.title.split(' · ');
+    a.innerHTML='<span class="n">Part '+n[0]+'</span><b>'+n[1]+'</b><span class="d">'+(p.dataset.blurb||'')+'</span>';
+    tiles.appendChild(a);
+  });
+
   /* ---------- mode ---------- */
   function setMode(m){
     root.setAttribute('data-mode',m);
     document.querySelectorAll('[data-set-mode]').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.setMode===m))});
     store('azpoc.mode',m);
+    render(true);
   }
-  var qm=new URLSearchParams(location.search).get('mode');
-  setMode(qm==='builder'||qm==='plain'?qm:(store('azpoc.mode')==='builder'?'builder':'plain'));
   document.querySelectorAll('[data-set-mode]').forEach(function(b){b.addEventListener('click',function(){setMode(b.dataset.setMode)})});
   document.getElementById('printBtn').addEventListener('click',function(){window.print()});
 
-  /* ---------- the flow diagram uses inline display:none to hide technical labels; mode CSS handles display ---------- */
-  document.querySelectorAll('span.t[style]').forEach(function(s){s.removeAttribute('style')});
-  if(!document.getElementById('spanFix')){
-    var st=document.createElement('style');st.id='spanFix';
-    st.textContent='span.t{display:none}[data-mode="builder"] span.t{display:inline}';
-    document.head.appendChild(st);
+  /* ---------- routing: #part or #part/sub ---------- */
+  function ownSubs(p){return [].slice.call(p.children).filter(function(c){return c.classList.contains('sub')})}
+  function visibleSubs(p){
+    var plain=root.getAttribute('data-mode')==='plain';
+    return ownSubs(p).filter(function(s){return !(plain&&s.hasAttribute('data-tech'))});
   }
+  function sequence(){
+    var seq=[];
+    parts.forEach(function(p){visibleSubs(p).forEach(function(s){seq.push({p:p,s:s})})});
+    return seq;
+  }
+  function parse(){
+    var h=location.hash.replace(/^#/,'').split('/');
+    var p=byId[h[0]]||byId.home;
+    var subs=visibleSubs(p),s=subs.filter(function(x){return x.dataset.id===h[1]})[0]||subs[0];
+    return {p:p,s:s};
+  }
+  function label(x){
+    if(x.p.id==='home')return 'Start';
+    if(x.p.id==='glossary')return 'Glossary';
+    var t=x.p.dataset.title.replace(/^\d+ · /,'');
+    return visibleSubs(x.p).length>1?t+': '+x.s.dataset.title:t;
+  }
+  function href(x){return '#'+x.p.id+(visibleSubs(x.p)[0]===x.s?'':'/'+x.s.dataset.id)}
 
-  /* ---------- contents + scroll spy ---------- */
-  var parts=[].slice.call(document.querySelectorAll('section.part'));
-  var toc=document.getElementById('tocList'), mini=document.getElementById('miniToc');
-  parts.forEach(function(p){
-    var li=document.createElement('li'), a=document.createElement('a');
-    a.href='#'+p.id;a.textContent=p.dataset.title;a.dataset.for=p.id;li.appendChild(a);toc.appendChild(li);
-    var o=document.createElement('option');o.value=p.id;o.textContent=p.dataset.title;mini.appendChild(o);
-  });
-  mini.addEventListener('change',function(){var t=document.getElementById(mini.value);if(t)t.scrollIntoView()});
-  if('IntersectionObserver' in window){
-    var io=new IntersectionObserver(function(es){
-      es.forEach(function(e){if(e.isIntersecting){
-        toc.querySelectorAll('a').forEach(function(a){a.classList.toggle('on',a.dataset.for===e.target.id)});
-        mini.value=e.target.id;
-      }});
-    },{rootMargin:'-20% 0px -70% 0px'});
-    parts.forEach(function(p){io.observe(p)});
+  var lastKey='';
+  function render(keepScroll){
+    var cur=parse();
+    parts.forEach(function(p){
+      p.classList.toggle('active',p===cur.p);
+      ownSubs(p).forEach(function(s){s.classList.toggle('active',s===cur.s)});
+    });
+    toc.querySelectorAll('a').forEach(function(a){a.classList.toggle('on',a.dataset.for===cur.p.id)});
+    mini.value=cur.p.id;
+
+    var subs=visibleSubs(cur.p);
+    if(subs.length>1&&cur.p.id!=='home'){
+      subbar.hidden=false;
+      subbar.innerHTML=subs.map(function(s){return '<a href="#'+cur.p.id+'/'+s.dataset.id+'"'+(s===cur.s?' class="on" aria-current="page"':'')+'>'+s.dataset.title+'</a>'}).join('');
+      var take=cur.p.querySelector('.take');
+      if(take)take.insertAdjacentElement('afterend',subbar);else cur.p.insertBefore(subbar,cur.p.firstChild);
+    }else{subbar.hidden=true}
+
+    var seq=sequence(),i=seq.findIndex(function(x){return x.s===cur.s});
+    var prev=seq[i-1],next=seq[i+1];
+    pager.innerHTML=(prev?'<a class="prev" href="'+href(prev)+'"><small>← Previous</small><b>'+label(prev)+'</b></a>':'<span></span>')+
+      (next?'<a class="next" href="'+href(next)+'"><small>Next →</small><b>'+label(next)+'</b></a>':'');
+    topBar.style.width=(seq.length>1?(i/(seq.length-1)*100):0)+'%';
+    document.title=(cur.p.id==='home'?'':label(cur)+' · ')+'Building a proof of concept on Azure';
+
+    var key=cur.p.id+'/'+cur.s.dataset.id;
+    if(key!==lastKey&&!keepScroll)window.scrollTo(0,0);
+    lastKey=key;
   }
+  window.addEventListener('hashchange',function(){render(false)});
+
+  var qm=new URLSearchParams(location.search).get('mode');
+  var m0=qm==='builder'||qm==='plain'?qm:(store('azpoc.mode')==='builder'?'builder':'plain');
+  root.setAttribute('data-mode',m0);
+  document.querySelectorAll('[data-set-mode]').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.setMode===m0))});
 
   /* ---------- copy buttons ---------- */
   document.querySelectorAll('pre').forEach(function(pre){
@@ -1097,6 +1139,7 @@ exceptions | order by timestamp desc | take 50</code></pre>
   try{var saved=store('azpoc.matrix');if(saved){var p=JSON.parse(saved);if(p&&p.options&&p.criteria)M=p}}catch(e){}
   var mt=document.getElementById('matrix');
   function clamp(v){v=parseInt(v,10);if(isNaN(v))v=1;return Math.max(1,Math.min(5,v))}
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
   function drawMatrix(){
     var h='<tr><th>Criterion</th><th>Weight</th>';
     M.options.forEach(function(o,i){h+='<th><input type="text" aria-label="Option '+(i+1)+' name" data-opt="'+i+'" value="'+esc(o)+'"></th>'});
@@ -1107,26 +1150,24 @@ exceptions | order by timestamp desc | take 50</code></pre>
       c.s.forEach(function(s,i){h+='<td><input type="number" min="1" max="5" aria-label="Score" data-r="'+r+'" data-c="'+i+'" value="'+s+'"></td>'});
       h+='</tr>';
     });
-    h+='<tr class="totrow"><td><b>Weighted score</b></td><td></td>'+M.options.map(function(_,i){return '<td class="tot" data-t="'+i+'"></td>'}).join('')+'</tr>';
+    h+='<tr><td><b>Weighted score</b></td><td></td>'+M.options.map(function(_,i){return '<td class="tot" data-t="'+i+'"></td>'}).join('')+'</tr>';
     mt.innerHTML=h;calc();
   }
-  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
   function totals(){
     var maxW=M.criteria.reduce(function(a,c){return a+c.w*5},0);
     return M.options.map(function(_,i){var t=M.criteria.reduce(function(a,c){return a+c.w*c.s[i]},0);return {t:t,pct:maxW?Math.round(t/maxW*100):0}});
   }
   function calc(){
     var T=totals(),best=Math.max.apply(null,T.map(function(x){return x.t}));
-    T.forEach(function(x,i){var td=mt.querySelector('[data-t="'+i+'"]');td.textContent=x.t+' ('+x.pct+'%)'});
-    var rows=mt.querySelector('.totrow');rows.className='totrow';
-    mt.querySelectorAll('td.tot').forEach(function(td,i){td.style.color=(T[i].t===best)?'var(--good)':''});
+    T.forEach(function(x,i){mt.querySelector('[data-t="'+i+'"]').textContent=x.t+' ('+x.pct+'%)'});
+    mt.querySelectorAll('td.tot').forEach(function(td,i){td.style.color=(T[i].t===best)?'var(--good)':'';td.style.fontWeight='700'});
   }
   mt.addEventListener('input',function(e){
     var t=e.target;
     if(t.dataset.opt!==undefined)M.options[+t.dataset.opt]=t.value;
     else if(t.dataset.cn!==undefined)M.criteria[+t.dataset.cn].n=t.value;
-    else if(t.dataset.w!==undefined){M.criteria[+t.dataset.w].w=clamp(t.value)}
-    else if(t.dataset.r!==undefined){M.criteria[+t.dataset.r].s[+t.dataset.c]=clamp(t.value)}
+    else if(t.dataset.w!==undefined)M.criteria[+t.dataset.w].w=clamp(t.value);
+    else if(t.dataset.r!==undefined)M.criteria[+t.dataset.r].s[+t.dataset.c]=clamp(t.value);
     store('azpoc.matrix',JSON.stringify(M));calc();
   });
   document.getElementById('matrixReset').addEventListener('click',function(){M=JSON.parse(JSON.stringify(M_DEF));store('azpoc.matrix',JSON.stringify(M));drawMatrix()});
@@ -1145,12 +1186,12 @@ exceptions | order by timestamp desc | take 50</code></pre>
   var ITEMS=[
     {id:'host',label:'API hosting (App Service)',opts:[['Free tier, limited (demo only)',0],['Basic B1',13],['Premium P0v3',62],['Premium P1v3 (staging slots)',100]],def:1},
     {id:'front',label:'Front end (Static Web Apps)',opts:[['Free',0],['Standard',9]],def:0},
-    {id:'db',label:'Database',opts:[['File database on the web app (demo only)',0],['Azure SQL Basic',5],['Azure SQL S0',15],['Azure SQL S1',30],['Azure SQL S2',75]],def:0},
+    {id:'db',label:'Database',opts:[['File database on web app (demo only)',0],['Azure SQL Basic',5],['Azure SQL S0',15],['Azure SQL S1',30],['Azure SQL S2',75]],def:0},
     {id:'store',label:'File storage (Blob)',opts:[['None',0],['Small, private',2]],def:0},
     {id:'kv',label:'Key Vault',opts:[['None (settings only)',0],['Standard',1]],def:0},
     {id:'mon',label:'Monitoring',opts:[['None',0],['Basic (Insights + logs)',5]],def:0},
-    {id:'edge',label:'Edge protection',opts:[['None',0],['Front Door Standard',35],['Front Door Premium + managed WAF',330]],def:0},
-    {id:'net',label:'Private networking, threat protection, extras',opts:[['None',0],['Typical set',300]],def:0}
+    {id:'edge',label:'Edge protection',opts:[['None',0],['Front Door Standard',35],['Front Door Premium + WAF',330]],def:0},
+    {id:'net',label:'Private networking, threat protection',opts:[['None',0],['Typical set',300]],def:0}
   ];
   var PRESETS={
     'Demo':{host:1,front:0,db:0,store:0,kv:0,mon:0,edge:0,net:0},
@@ -1178,28 +1219,28 @@ exceptions | order by timestamp desc | take 50</code></pre>
       '<div class="k"><b>'+usd(hosting)+'</b><span>cloud cost over '+mo+' month'+(mo>1?'s':'')+'</span></div>'+
       '<div class="k"><b>'+usd(people)+'</b><span>people time (one-off)</span></div>'+
       '<div class="k"><b>'+usd(hosting+people)+'</b><span>total POC cost</span></div>'+
-      '<p style="flex-basis:100%;margin:0" class="hint">'+(ratio===null?'No cloud cost in this design, so people time is the whole cost.':'People time is about '+(ratio>=10?Math.round(ratio):ratio.toFixed(1))+' times the cloud cost in this scenario.')+' Figures are rounded planning estimates, not quotes.</p>';
+      '<p style="flex-basis:100%;margin:0" class="hint">'+(ratio===null?'No cloud cost in this design, so people time is the whole cost.':'People time is about '+(ratio>=10?Math.round(ratio):ratio.toFixed(1))+' times the cloud cost here.')+' Rounded planning estimates, not quotes.</p>';
   }
   document.getElementById('costTool').addEventListener('input',costCalc);
   costCalc();
 
   /* ---------- checklist ---------- */
   var DONE=[
-    'The question the POC answers is written down and agreed by the sponsor',
-    'Interviews done with at least one person from each group; findings played back',
+    'The POC question is written down and agreed by the sponsor',
+    'Interviews done with each group; findings played back',
     'A one-page brief with a "won\'t this time" list exists',
-    'Options compared (decision matrix) and the choice is explained',
-    'Cost range estimated and verified in the Azure pricing calculator; budget alert set',
+    'Options compared (decision matrix) and the choice explained',
+    'Cost range checked in the Azure pricing calculator; budget alert set',
     'IT questions sent and answers recorded',
     'The main journey works end to end for every role',
     'The system refuses forbidden actions, and tests prove it',
     'Every change appears in the history',
     'Demo data covers every state',
-    'Deployment is scripted; someone else can repeat it from the notes',
+    'Deployment is scripted; someone else can repeat it',
     'Health checks, logs and a budget alert exist',
-    'Only fake data; no secrets in the code or repository',
-    'Real users tried it and their words are recorded',
-    'Success measures collected and the decision paper written',
+    'Only fake data; no secrets in code or repository',
+    'Real users tried it; their words are recorded',
+    'Success measures collected; decision paper written',
     'The path to production is costed and has an owner'
   ];
   var cl=document.getElementById('checkList'),ticks={};
@@ -1213,6 +1254,8 @@ exceptions | order by timestamp desc | take 50</code></pre>
   cl.addEventListener('change',function(e){ticks[e.target.dataset.i]=e.target.checked;store('azpoc.checks',JSON.stringify(ticks));prog()});
   document.getElementById('checkReset').addEventListener('click',function(){ticks={};store('azpoc.checks','{}');cl.querySelectorAll('input').forEach(function(i){i.checked=false});prog()});
   prog();
+
+  render(true);
 })();
 </script>
 </body>
