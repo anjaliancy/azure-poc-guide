@@ -36,3 +36,6 @@ from other sites).
 `Azure-POC-Guide-plain.pdf` and `Azure-POC-Guide-technical.pdf` are print exports of the two
 views. Regenerate them after any content change (print from the browser with the mode you want,
 background graphics on).
+
+## Font
+The page uses Nunito (SIL Open Font License, see `fonts/OFL.txt`), served from `fonts/` so the page still loads nothing from other sites.
